@@ -23,7 +23,7 @@
 #property strict
 
 //--- Include the Structure Engine
-#include "StructureEngine.mqh"
+#include "../engines/StructureEngine.mqh"
 
 //=========================================================
 // INPUT PARAMETERS

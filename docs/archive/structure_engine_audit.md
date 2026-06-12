@@ -2,7 +2,7 @@
 
 ## 1. How Every System Works
 
-### 1.1 Swing Detection ([DetectSwings](file:///c:/xauusd_chatgpt/StructureEngine.mqh#L534-L591))
+### 1.1 Swing Detection ([DetectSwings](file:///c:/xauusd_chatgpt/src/engines/StructureEngine.mqh#L534-L591))
 
 **Method**: Fractal-based. A bar is a Swing High if the N bars on each side all have strictly lower highs. Swing Low is the mirror. N defaults to 3.
 
@@ -12,7 +12,7 @@
 
 ---
 
-### 1.2 Major / Minor Classification ([ClassifySwingGrades](file:///c:/xauusd_chatgpt/StructureEngine.mqh#L600-L713))
+### 1.2 Major / Minor Classification ([ClassifySwingGrades](file:///c:/xauusd_chatgpt/src/engines/StructureEngine.mqh#L600-L713))
 
 **Rule**: A swing is **Major** if the absolute price-distance from the previous **Major** swing of the same type is `>= 0.5 × ATR(14)` at that bar. Otherwise it is **Minor**.
 
@@ -23,7 +23,7 @@
 
 ---
 
-### 1.3 HH / HL / LH / LL Classification ([DetectHHHL](file:///c:/xauusd_chatgpt/StructureEngine.mqh#L891-L988))
+### 1.3 HH / HL / LH / LL Classification ([DetectHHHL](file:///c:/xauusd_chatgpt/src/engines/StructureEngine.mqh#L891-L988))
 
 **Uses**: `m_majorHighs[]` and `m_majorLows[]` only. Minor swings are never labeled.
 
@@ -36,7 +36,7 @@ Labels are then synced back to `m_swingHighs[]`, `m_swingLows[]`, and `m_allSwin
 
 ---
 
-### 1.4 BOS Detection ([DetectBOS](file:///c:/xauusd_chatgpt/StructureEngine.mqh#L1026-L1144))
+### 1.4 BOS Detection ([DetectBOS](file:///c:/xauusd_chatgpt/src/engines/StructureEngine.mqh#L1026-L1144))
 
 **Uses**: `m_majorHighs[]` and `m_majorLows[]` only.
 
@@ -48,7 +48,7 @@ Labels are then synced back to `m_swingHighs[]`, `m_swingLows[]`, and `m_allSwin
 
 ---
 
-### 1.5 MSS Detection ([DetectMSS](file:///c:/xauusd_chatgpt/StructureEngine.mqh#L1152-L1227))
+### 1.5 MSS Detection ([DetectMSS](file:///c:/xauusd_chatgpt/src/engines/StructureEngine.mqh#L1152-L1227))
 
 **Method**: Iterates BOS events from oldest to newest, maintaining a "running trend" that mirrors the trend-determination logic (2 consecutive same-direction BOS = trend confirmed).
 
@@ -60,7 +60,7 @@ Labels are then synced back to `m_swingHighs[]`, `m_swingLows[]`, and `m_allSwin
 
 ---
 
-### 1.6 Trend State ([DetectTrendState](file:///c:/xauusd_chatgpt/StructureEngine.mqh#L1236-L1287))
+### 1.6 Trend State ([DetectTrendState](file:///c:/xauusd_chatgpt/src/engines/StructureEngine.mqh#L1236-L1287))
 
 **Uses**: `m_majorHighs[]` and `m_majorLows[]` labels.
 
@@ -72,7 +72,7 @@ Labels are then synced back to `m_swingHighs[]`, `m_swingLows[]`, and `m_allSwin
 
 ---
 
-### 1.7 Strength Score ([CalculateStrengthScores](file:///c:/xauusd_chatgpt/StructureEngine.mqh#L791-L884))
+### 1.7 Strength Score ([CalculateStrengthScores](file:///c:/xauusd_chatgpt/src/engines/StructureEngine.mqh#L791-L884))
 
 Calculated for Major swings only. Three weighted components:
 
@@ -88,7 +88,7 @@ Calculated for Major swings only. Three weighted components:
 
 ---
 
-### 1.8 Analyze() Pipeline ([Analyze](file:///c:/xauusd_chatgpt/StructureEngine.mqh#L1302-L1413))
+### 1.8 Analyze() Pipeline ([Analyze](file:///c:/xauusd_chatgpt/src/engines/StructureEngine.mqh#L1302-L1413))
 
 ```mermaid
 flowchart TD
@@ -137,7 +137,7 @@ flowchart TD
 > [!CAUTION]
 > **BUG 1: BOS detection has premature exit logic**
 
-At [L1056-L1087](file:///c:/xauusd_chatgpt/StructureEngine.mqh#L1056-L1087) (and the bearish mirror at [L1107-L1138](file:///c:/xauusd_chatgpt/StructureEngine.mqh#L1107-L1138)):
+At [L1056-L1087](file:///c:/xauusd_chatgpt/src/engines/StructureEngine.mqh#L1056-L1087) (and the bearish mirror at [L1107-L1138](file:///c:/xauusd_chatgpt/src/engines/StructureEngine.mqh#L1107-L1138)):
 
 ```
 if(closePrice > swingPrice)
@@ -172,7 +172,7 @@ This is NOT chronological. `DetectMSS()` will see all bullish events first, pote
 > [!WARNING]
 > **BUG 3: First Major swing always gets strength score 0**
 
-At [L804](file:///c:/xauusd_chatgpt/StructureEngine.mqh#L804): `displacement = m_majorHighs[hIdx].distanceFromPrev`, and the first Major swing has `distanceFromPrev = 0.0` (set at [L612](file:///c:/xauusd_chatgpt/StructureEngine.mqh#L612)). This gives ATR displacement score = 0. Combined with high age (oldest bar = largest barIndex), the first Major swing will always score very low.
+At [L804](file:///c:/xauusd_chatgpt/src/engines/StructureEngine.mqh#L804): `displacement = m_majorHighs[hIdx].distanceFromPrev`, and the first Major swing has `distanceFromPrev = 0.0` (set at [L612](file:///c:/xauusd_chatgpt/src/engines/StructureEngine.mqh#L612)). This gives ATR displacement score = 0. Combined with high age (oldest bar = largest barIndex), the first Major swing will always score very low.
 
 Not a crash, but produces misleading score for the foundational swing.
 
@@ -181,7 +181,7 @@ Not a crash, but produces misleading score for the foundational swing.
 > [!WARNING]
 > **BUG 4: Trend state counts break at LABEL_NONE**
 
-At [L1247-L1265](file:///c:/xauusd_chatgpt/StructureEngine.mqh#L1247-L1265), the loop counts consecutive HH/LH backward from the newest swing but **breaks** when it hits `LABEL_NONE`. The first Major swing always has `LABEL_NONE`, so the loop always terminates there. But this also means if there are only 3 Major swing highs (1 NONE + 2 classified), the count will correctly reach 2. However, the counting for highs and lows is **independent** — in a market with 2 recent HH but only 1 HL, it will stay RANGE even though the structure is clearly bullish.
+At [L1247-L1265](file:///c:/xauusd_chatgpt/src/engines/StructureEngine.mqh#L1247-L1265), the loop counts consecutive HH/LH backward from the newest swing but **breaks** when it hits `LABEL_NONE`. The first Major swing always has `LABEL_NONE`, so the loop always terminates there. But this also means if there are only 3 Major swing highs (1 NONE + 2 classified), the count will correctly reach 2. However, the counting for highs and lows is **independent** — in a market with 2 recent HH but only 1 HL, it will stay RANGE even though the structure is clearly bullish.
 
 This is correct per spec (need 2 of each), but the independent counting means HH and HL can be from completely different time windows, which is misleading.
 
@@ -197,14 +197,14 @@ Old swings have more bars after them → more opportunities for reactions → hi
 > [!WARNING]
 > **BUG 6: Equal-price swings are misclassified**
 
-In `DetectHHHL()` at [L901](file:///c:/xauusd_chatgpt/StructureEngine.mqh#L901): `if(price > previousPrice)` → HH, else → LH. If two consecutive Major swing highs have the **exact same price**, the second is classified as LH (bearish). This is incorrect — equal highs are not a bearish signal. They indicate accumulation/ranging. Same issue exists for swing lows.
+In `DetectHHHL()` at [L901](file:///c:/xauusd_chatgpt/src/engines/StructureEngine.mqh#L901): `if(price > previousPrice)` → HH, else → LH. If two consecutive Major swing highs have the **exact same price**, the second is classified as LH (bearish). This is incorrect — equal highs are not a bearish signal. They indicate accumulation/ranging. Same issue exists for swing lows.
 
 ---
 
 > [!NOTE]
 > **BUG 7: `barAge` uses barIndex directly**
 
-At [L819](file:///c:/xauusd_chatgpt/StructureEngine.mqh#L819): `int age = m_majorHighs[hIdx].barIndex`. In series arrays, `barIndex=0` is the newest bar and `barIndex=499` is the oldest. So `barAge` is the distance in bars from the current bar, which is semantically correct. However, this value changes every time `Analyze()` runs (a swing at physical bar X will have different barIndex as new bars form). This is acceptable but worth noting — the age score is dynamically recalculated, not static.
+At [L819](file:///c:/xauusd_chatgpt/src/engines/StructureEngine.mqh#L819): `int age = m_majorHighs[hIdx].barIndex`. In series arrays, `barIndex=0` is the newest bar and `barIndex=499` is the oldest. So `barAge` is the distance in bars from the current bar, which is semantically correct. However, this value changes every time `Analyze()` runs (a swing at physical bar X will have different barIndex as new bars form). This is acceptable but worth noting — the age score is dynamically recalculated, not static.
 
 ---
 

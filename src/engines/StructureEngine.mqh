@@ -1,17 +1,17 @@
 //+------------------------------------------------------------------+
 //|                                           StructureEngine.mqh    |
 //|                        XAUUSD Market Structure Engine            |
-//|                        Version 2.1 - Active Level + Invalidation |
+//|                        Version 2.2 - Bug Fixes (Validation Phase)|
 //+------------------------------------------------------------------+
 //| PURPOSE:                                                         |
 //|   Detect market structure on H4 timeframe for XAUUSD.            |
 //|   This module is the first stage in the EA data flow pipeline.   |
 //|                                                                  |
-//| VERSION 2.1 FIXES (from audit):                                  |
-//|   P1.1  Fixed BOS premature exit bug                             |
-//|   P1.2  BOS events now chronologically ordered                   |
-//|   P1.3  Active Structure Level: only last unbroken swing = BOS   |
-//|   P1.4  Swing invalidation when broken by BOS                    |
+//| VERSION 2.2 FIXES (from validation):                             |
+//|   1. Fixed Trend Classification locked to BULLISH (consecutive)  |
+//|   2. Excluded Bar 0 from BOS Scan to prevent repainting          |
+//|   3. Fixed Reaction Leak by stopping scan at BOS break bar       |
+//|   4. Fixed Reaction Inflation by grouping consolidation touches  |
 //|                                                                  |
 //| RESPONSIBILITIES:                                                |
 //|   1. Detect Swing High / Swing Low (fractal-based, N candles)    |
@@ -25,7 +25,7 @@
 //+------------------------------------------------------------------+
 #property copyright "XAUUSD EA"
 #property link      ""
-#property version   "2.10"
+#property version   "2.20"
 #property strict
 
 //=========================================================
@@ -99,6 +99,7 @@ struct SwingPoint
    int                  reactionCount;   // Times price reacted at this level
    int                  barAge;          // Age in bars from current bar
    bool                 isInvalidated;   // true if swing broken by BOS
+   int                  breakBarIndex;   // Bar index where swing was broken by BOS
 
    //--- Constructor
    SwingPoint()
@@ -114,6 +115,7 @@ struct SwingPoint
       reactionCount    = 0;
       barAge           = 0;
       isInvalidated    = false;
+      breakBarIndex    = -1;
    }
 };
 
@@ -285,7 +287,7 @@ private:
    //--- Private methods: strength scoring
    void              CalculateStrengthScores();
    int               CountReactions(double level, double tolerance,
-                                    int swingBarIndex, ENUM_SWING_TYPE swingType);
+                                    int swingBarIndex, int breakBarIndex, ENUM_SWING_TYPE swingType);
 
    //--- Private methods: invalidation
    void              SyncInvalidationToArrays();
@@ -441,15 +443,34 @@ bool CStructureEngine::IsNewBar()
 //=========================================================
 double CStructureEngine::GetATRValue(int barIndex)
 {
-   if(m_atrHandle == INVALID_HANDLE) return 0.0;
-   double atrBuffer[];
-   ArraySetAsSeries(atrBuffer, true);
-   if(CopyBuffer(m_atrHandle, 0, barIndex, 1, atrBuffer) <= 0)
+   int period = m_atrPeriod;
+   if(m_cachedBarsCount <= barIndex + period) return 0.0;
+   
+   double sumTR = 0.0;
+   int count = 0;
+   
+   for(int i = 0; i < period; i++)
    {
-      LogMessage("WARNING: Failed to read ATR at bar " + IntegerToString(barIndex));
-      return 0.0;
+      int idx = barIndex + i;
+      if(idx >= m_cachedBarsCount - 1) break;
+      
+      double high = m_cachedHighs[idx];
+      double low = m_cachedLows[idx];
+      double closePrev = m_cachedCloses[idx + 1];
+      
+      double tr = high - low;
+      double tr2 = MathAbs(high - closePrev);
+      double tr3 = MathAbs(low - closePrev);
+      
+      double maxTR = tr;
+      if(tr2 > maxTR) maxTR = tr2;
+      if(tr3 > maxTR) maxTR = tr3;
+      
+      sumTR += maxTR;
+      count++;
    }
-   return atrBuffer[0];
+   
+   return (count > 0) ? (sumTR / count) : 0.0;
 }
 
 //=========================================================
@@ -673,19 +694,27 @@ void CStructureEngine::BuildMajorSwingArrays()
 // CountReactions
 //=========================================================
 int CStructureEngine::CountReactions(double level, double tolerance,
-                                      int swingBarIndex, ENUM_SWING_TYPE swingType)
+                                      int swingBarIndex, int breakBarIndex, ENUM_SWING_TYPE swingType)
 {
    int reactions = 0;
-   for(int bar = swingBarIndex - 1; bar >= 0; bar--)
+   int stopBar = (breakBarIndex >= 0) ? breakBarIndex : 0;
+   bool insideZone = false;
+   
+   for(int bar = swingBarIndex - 1; bar >= stopBar; bar--)
    {
       if(bar >= m_cachedBarsCount) continue;
-      if(swingType == SWING_HIGH)
+      double diff = (swingType == SWING_HIGH) ? MathAbs(m_cachedHighs[bar] - level) : MathAbs(m_cachedLows[bar] - level);
+      if(diff <= tolerance)
       {
-         if(MathAbs(m_cachedHighs[bar] - level) <= tolerance) reactions++;
+         if(!insideZone)
+         {
+            reactions++;
+            insideZone = true;
+         }
       }
       else
       {
-         if(MathAbs(m_cachedLows[bar] - level) <= tolerance) reactions++;
+         insideZone = false;
       }
    }
    return reactions;
@@ -707,7 +736,7 @@ void CStructureEngine::CalculateStrengthScores()
       double atrS = (atr > 0.0) ? MathMin(100.0, (disp / atr) * 50.0) : 0.0;
 
       double tol = m_reactionTolerance * atr;
-      int react = CountReactions(m_majorHighs[i].price, tol, m_majorHighs[i].barIndex, SWING_HIGH);
+      int react = CountReactions(m_majorHighs[i].price, tol, m_majorHighs[i].barIndex, m_majorHighs[i].breakBarIndex, SWING_HIGH);
       m_majorHighs[i].reactionCount = react;
       double reactS = MathMin(100.0, react * 25.0);
 
@@ -727,6 +756,7 @@ void CStructureEngine::CalculateStrengthScores()
             m_swingHighs[s].strengthScore = m_majorHighs[i].strengthScore;
             m_swingHighs[s].reactionCount = react;
             m_swingHighs[s].barAge = age;
+            m_swingHighs[s].breakBarIndex = m_majorHighs[i].breakBarIndex;
             break;
          }
       }
@@ -740,7 +770,7 @@ void CStructureEngine::CalculateStrengthScores()
       double atrS = (atr > 0.0) ? MathMin(100.0, (disp / atr) * 50.0) : 0.0;
 
       double tol = m_reactionTolerance * atr;
-      int react = CountReactions(m_majorLows[i].price, tol, m_majorLows[i].barIndex, SWING_LOW);
+      int react = CountReactions(m_majorLows[i].price, tol, m_majorLows[i].barIndex, m_majorLows[i].breakBarIndex, SWING_LOW);
       m_majorLows[i].reactionCount = react;
       double reactS = MathMin(100.0, react * 25.0);
 
@@ -759,6 +789,7 @@ void CStructureEngine::CalculateStrengthScores()
             m_swingLows[s].strengthScore = m_majorLows[i].strengthScore;
             m_swingLows[s].reactionCount = react;
             m_swingLows[s].barAge = age;
+            m_swingLows[s].breakBarIndex = m_majorLows[i].breakBarIndex;
             break;
          }
       }
@@ -911,96 +942,98 @@ int CStructureEngine::DetectBOS(const double &closes[], const datetime &times[],
    //--- Single pass: oldest bar → newest bar
    //    ORDER: (1) check BOS against current active, (2) update active
    //    This ensures BOS fires against the PREVIOUS active, not a new swing
-   for(int barIdx = startBar; barIdx >= 0; barIdx--)
-   {
-      if(barIdx >= totalBars)
-         continue;
+    for(int barIdx = startBar; barIdx >= 1; barIdx--)
+    {
+       if(barIdx >= totalBars)
+          continue;
 
-      //=== STEP 1: Check Bullish BOS ===
-      //    Close > active swing high, validated by ATR distance
-      if(activeHighIdx >= 0)
-      {
-         double swingPrice = m_majorHighs[activeHighIdx].price;
-         double closePrice = closes[barIdx];
+       //=== STEP 1: Check Bullish BOS ===
+       //    Close > active swing high, validated by ATR distance
+       if(activeHighIdx >= 0)
+       {
+          double swingPrice = m_majorHighs[activeHighIdx].price;
+          double closePrice = closes[barIdx];
 
-         if(closePrice > swingPrice)
-         {
-            double atrValue  = GetATRValue(barIdx);
-            double breakDist = closePrice - swingPrice;
-            double minBreak  = m_bosBreakMultiplier * atrValue;
+          if(closePrice > swingPrice)
+          {
+             double atrValue  = GetATRValue(barIdx);
+             double breakDist = closePrice - swingPrice;
+             double minBreak  = m_bosBreakMultiplier * atrValue;
 
-            if(atrValue > 0.0 && breakDist >= minBreak)
-            {
-               BOSEvent bos;
-               bos.barIndex        = barIdx;
-               bos.barTime         = times[barIdx];
-               bos.breakPrice      = closePrice;
-               bos.brokenLevel     = swingPrice;
-               bos.breakDistance    = breakDist;
-               bos.atrValue        = atrValue;
-               bos.minBreakDistance = minBreak;
-               bos.direction       = BOS_BULLISH;
+             if(atrValue > 0.0 && breakDist >= minBreak)
+             {
+                BOSEvent bos;
+                bos.barIndex        = barIdx;
+                bos.barTime         = times[barIdx];
+                bos.breakPrice      = closePrice;
+                bos.brokenLevel     = swingPrice;
+                bos.breakDistance    = breakDist;
+                bos.atrValue        = atrValue;
+                bos.minBreakDistance = minBreak;
+                bos.direction       = BOS_BULLISH;
 
-               int bosSize = ArraySize(m_bosEvents);
-               ArrayResize(m_bosEvents, bosSize + 1);
-               m_bosEvents[bosSize] = bos;
-               bosCount++;
+                int bosSize = ArraySize(m_bosEvents);
+                ArrayResize(m_bosEvents, bosSize + 1);
+                m_bosEvents[bosSize] = bos;
+                bosCount++;
 
-               //--- INVALIDATE the broken swing
-               m_majorHighs[activeHighIdx].isInvalidated = true;
-               activeHighIdx = -1;   // Wait for next swing
+                //--- INVALIDATE the broken swing
+                m_majorHighs[activeHighIdx].isInvalidated = true;
+                m_majorHighs[activeHighIdx].breakBarIndex = barIdx;
+                activeHighIdx = -1;   // Wait for next swing
 
-               LogMessage("BOS BULLISH | Close=" + DoubleToString(closePrice, (int)_Digits)
-                          + " > ActiveHigh=" + DoubleToString(swingPrice, (int)_Digits)
-                          + " | Dist=" + DoubleToString(breakDist, (int)_Digits)
-                          + " | Time=" + TimeToString(times[barIdx]));
-            }
-            //--- FIX P1.1: NO break here!
-            //    If ATR fails, active level stays. Continue scanning next bars.
-         }
-      }
+                LogMessage("BOS BULLISH | Close=" + DoubleToString(closePrice, (int)_Digits)
+                           + " > ActiveHigh=" + DoubleToString(swingPrice, (int)_Digits)
+                           + " | Dist=" + DoubleToString(breakDist, (int)_Digits)
+                           + " | Time=" + TimeToString(times[barIdx]));
+             }
+             //--- FIX P1.1: NO break here!
+             //    If ATR fails, active level stays. Continue scanning next bars.
+          }
+       }
 
-      //=== STEP 2: Check Bearish BOS ===
-      //    Close < active swing low, validated by ATR distance
-      if(activeLowIdx >= 0)
-      {
-         double swingPrice = m_majorLows[activeLowIdx].price;
-         double closePrice = closes[barIdx];
+       //=== STEP 2: Check Bearish BOS ===
+       //    Close < active swing low, validated by ATR distance
+       if(activeLowIdx >= 0)
+       {
+          double swingPrice = m_majorLows[activeLowIdx].price;
+          double closePrice = closes[barIdx];
 
-         if(closePrice < swingPrice)
-         {
-            double atrValue  = GetATRValue(barIdx);
-            double breakDist = swingPrice - closePrice;
-            double minBreak  = m_bosBreakMultiplier * atrValue;
+          if(closePrice < swingPrice)
+          {
+             double atrValue  = GetATRValue(barIdx);
+             double breakDist = swingPrice - closePrice;
+             double minBreak  = m_bosBreakMultiplier * atrValue;
 
-            if(atrValue > 0.0 && breakDist >= minBreak)
-            {
-               BOSEvent bos;
-               bos.barIndex        = barIdx;
-               bos.barTime         = times[barIdx];
-               bos.breakPrice      = closePrice;
-               bos.brokenLevel     = swingPrice;
-               bos.breakDistance    = breakDist;
-               bos.atrValue        = atrValue;
-               bos.minBreakDistance = minBreak;
-               bos.direction       = BOS_BEARISH;
+             if(atrValue > 0.0 && breakDist >= minBreak)
+             {
+                BOSEvent bos;
+                bos.barIndex        = barIdx;
+                bos.barTime         = times[barIdx];
+                bos.breakPrice      = closePrice;
+                bos.brokenLevel     = swingPrice;
+                bos.breakDistance    = breakDist;
+                bos.atrValue        = atrValue;
+                bos.minBreakDistance = minBreak;
+                bos.direction       = BOS_BEARISH;
 
-               int bosSize = ArraySize(m_bosEvents);
-               ArrayResize(m_bosEvents, bosSize + 1);
-               m_bosEvents[bosSize] = bos;
-               bosCount++;
+                int bosSize = ArraySize(m_bosEvents);
+                ArrayResize(m_bosEvents, bosSize + 1);
+                m_bosEvents[bosSize] = bos;
+                bosCount++;
 
-               m_majorLows[activeLowIdx].isInvalidated = true;
-               activeLowIdx = -1;
+                m_majorLows[activeLowIdx].isInvalidated = true;
+                m_majorLows[activeLowIdx].breakBarIndex = barIdx;
+                activeLowIdx = -1;
 
-               LogMessage("BOS BEARISH | Close=" + DoubleToString(closePrice, (int)_Digits)
-                          + " < ActiveLow=" + DoubleToString(swingPrice, (int)_Digits)
-                          + " | Dist=" + DoubleToString(breakDist, (int)_Digits)
-                          + " | Time=" + TimeToString(times[barIdx]));
-            }
-            //--- FIX P1.1: NO break here!
-         }
-      }
+                LogMessage("BOS BEARISH | Close=" + DoubleToString(closePrice, (int)_Digits)
+                           + " < ActiveLow=" + DoubleToString(swingPrice, (int)_Digits)
+                           + " | Dist=" + DoubleToString(breakDist, (int)_Digits)
+                           + " | Time=" + TimeToString(times[barIdx]));
+             }
+             //--- FIX P1.1: NO break here!
+          }
+       }
 
       //=== STEP 3: Update active levels if new Major swing at this bar ===
       //    New swing REPLACES the previous active (it is now the "terakhir")
@@ -1038,16 +1071,25 @@ void CStructureEngine::SyncInvalidationToArrays()
          continue;
 
       int targetBar = m_majorHighs[mi].barIndex;
+      int breakBar = m_majorHighs[mi].breakBarIndex;
 
       for(int si = 0; si < shc; si++)
       {
          if(m_swingHighs[si].barIndex == targetBar)
-         { m_swingHighs[si].isInvalidated = true; break; }
+         { 
+            m_swingHighs[si].isInvalidated = true; 
+            m_swingHighs[si].breakBarIndex = breakBar;
+            break; 
+         }
       }
       for(int ai = 0; ai < asc; ai++)
       {
          if(m_allSwings[ai].barIndex == targetBar && m_allSwings[ai].swingType == SWING_HIGH)
-         { m_allSwings[ai].isInvalidated = true; break; }
+         { 
+            m_allSwings[ai].isInvalidated = true; 
+            m_allSwings[ai].breakBarIndex = breakBar;
+            break; 
+         }
       }
    }
 
@@ -1060,16 +1102,25 @@ void CStructureEngine::SyncInvalidationToArrays()
          continue;
 
       int targetBar = m_majorLows[mi].barIndex;
+      int breakBar = m_majorLows[mi].breakBarIndex;
 
       for(int si = 0; si < slc; si++)
       {
          if(m_swingLows[si].barIndex == targetBar)
-         { m_swingLows[si].isInvalidated = true; break; }
+         { 
+            m_swingLows[si].isInvalidated = true; 
+            m_swingLows[si].breakBarIndex = breakBar;
+            break; 
+         }
       }
       for(int ai = 0; ai < asc; ai++)
       {
          if(m_allSwings[ai].barIndex == targetBar && m_allSwings[ai].swingType == SWING_LOW)
-         { m_allSwings[ai].isInvalidated = true; break; }
+         { 
+            m_allSwings[ai].isInvalidated = true; 
+            m_allSwings[ai].breakBarIndex = breakBar;
+            break; 
+         }
       }
    }
 
@@ -1154,22 +1205,43 @@ int CStructureEngine::DetectMSS()
 //=========================================================
 ENUM_TREND_STATE CStructureEngine::DetectTrendState()
 {
-   int recentHH = 0, recentHL = 0, recentLH = 0, recentLL = 0;
+   int recentHH = 0, recentHL = 0;
+   int recentLH = 0, recentLL = 0;
 
    int mhc = ArraySize(m_majorHighs);
-   for(int i = mhc - 1; i >= 0; i--)
+   if(mhc > 0)
    {
-      if(m_majorHighs[i].label == LABEL_HH) recentHH++;
-      else if(m_majorHighs[i].label == LABEL_LH) recentLH++;
-      else break;
+      ENUM_STRUCTURE_LABEL targetLabel = m_majorHighs[mhc - 1].label;
+      for(int i = mhc - 1; i >= 0; i--)
+      {
+         if(m_majorHighs[i].label == targetLabel)
+         {
+            if(targetLabel == LABEL_HH) recentHH++;
+            else if(targetLabel == LABEL_LH) recentLH++;
+         }
+         else
+         {
+            break;
+         }
+      }
    }
 
    int mlc = ArraySize(m_majorLows);
-   for(int i = mlc - 1; i >= 0; i--)
+   if(mlc > 0)
    {
-      if(m_majorLows[i].label == LABEL_HL) recentHL++;
-      else if(m_majorLows[i].label == LABEL_LL) recentLL++;
-      else break;
+      ENUM_STRUCTURE_LABEL targetLabel = m_majorLows[mlc - 1].label;
+      for(int i = mlc - 1; i >= 0; i--)
+      {
+         if(m_majorLows[i].label == targetLabel)
+         {
+            if(targetLabel == LABEL_HL) recentHL++;
+            else if(targetLabel == LABEL_LL) recentLL++;
+         }
+         else
+         {
+            break;
+         }
+      }
    }
 
    ENUM_TREND_STATE prev = m_currentTrend;
@@ -1244,25 +1316,25 @@ StructureResult CStructureEngine::Analyze(int maxBars)
    result.minorHighCount = result.swingHighCount - result.majorHighCount;
    result.minorLowCount  = result.swingLowCount  - result.majorLowCount;
 
-   //--- Step 4: Strength Scores
-   CalculateStrengthScores();
-
-   //--- Step 5: Classify HH/HL (Major only)
+   //--- Step 4: Classify HH/HL (Major only)
    DetectHHHL();
 
-   //--- Step 6: Count LH/LL (Major only)
+   //--- Step 5: Count LH/LL (Major only)
    DetectLHLL();
 
-   //--- Step 7: Detect BOS (Active Level tracking)
+   //--- Step 6: Detect BOS (Active Level tracking)
    result.bosCount = DetectBOS(m_cachedCloses, m_cachedTimes, barsToAnalyze);
 
-   //--- Step 7b: Sync invalidation to all arrays
+   //--- Step 7: Sync invalidation to all arrays
    SyncInvalidationToArrays();
 
-   //--- Step 8: Determine trend state
+   //--- Step 8: Strength Scores (Moved after BOS & Invalidation Sync)
+   CalculateStrengthScores();
+
+   //--- Step 9: Determine trend state
    result.currentTrend = DetectTrendState();
 
-   //--- Step 9: Detect MSS (BOS is now chronological)
+   //--- Step 10: Detect MSS (BOS is now chronological)
    result.mssCount = DetectMSS();
 
    //--- Count labels from Major swings

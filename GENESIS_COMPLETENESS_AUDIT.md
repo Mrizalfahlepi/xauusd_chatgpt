@@ -9,7 +9,13 @@
 
 ## 1. Executive Summary
 
-This audit report verifies the completeness and accuracy of **[PROJECT_GENESIS.md](file:///c:/xauusd_chatgpt/PROJECT_GENESIS.md)**. It cross-checks the contents of the Master Project Bible against the actual repository files, historical timelines, and validated engine parameters to guarantee that no critical information has been omitted, distorted, or invented.
+This audit report verifies the completeness and accuracy of the **Project Recovery Package** consisting of the following core documents:
+1.  **[PROJECT_GENESIS.md](file:///c:/xauusd_chatgpt/PROJECT_GENESIS.md)**: Master Project Bible.
+2.  **[SYSTEM_ROADMAP.md](file:///c:/xauusd_chatgpt/SYSTEM_ROADMAP.md)**: Chronological phase specification.
+3.  **[PROJECT_RECOVERY_PROTOCOL.md](file:///c:/xauusd_chatgpt/PROJECT_RECOVERY_PROTOCOL.md)**: Onboarding instructions for future developers and AI agents.
+4.  **[MILESTONE_GENESIS_FREEZE.md](file:///c:/xauusd_chatgpt/MILESTONE_GENESIS_FREEZE.md)**: Snapshot of the exact project status and git tree today.
+
+It cross-checks these files against the actual repository directories, historical timelines, and validated engine parameters to guarantee that no critical information has been omitted, distorted, or invented.
 
 ---
 
@@ -35,24 +41,41 @@ The table below audits the sections of the Genesis document against their respec
 
 ---
 
-## 3. Specific Component Cross-Check
+## 3. Recovery Package Integrity Verification
 
-### 3.1 Structure Engine v2.2 Check
+1.  **[SYSTEM_ROADMAP.md](file:///c:/xauusd_chatgpt/SYSTEM_ROADMAP.md) Validation**:
+    *   Verifies distinct definitions for all **8 development phases** (Structure, S/D, SNR, Liquidity, Entry, Risk, Portfolio, and Live Validation).
+    *   Confirmed matching Purpose, Inputs, Outputs, Dependencies, and Status for all phases.
+2.  **[PROJECT_RECOVERY_PROTOCOL.md](file:///c:/xauusd_chatgpt/PROJECT_RECOVERY_PROTOCOL.md) Validation**:
+    *   Verifies onboarding guide including a **Mandatory Reading Order** starting from `/PROJECT_GENESIS.md` and ending with SNR specifications.
+    *   Confirmed matching Permanent System Rules (Never modify frozen modules, Always audit before implementation, Always verify with backtests, Never trust statistical assumptions without validation).
+    *   Confirmed detailed step-by-step **Recovery Procedure** for loss of chat history.
+3.  **[MILESTONE_GENESIS_FREEZE.md](file:///c:/xauusd_chatgpt/MILESTONE_GENESIS_FREEZE.md) Validation**:
+    *   Verifies physical directory map matches the newly refactored folder layout.
+    *   Confirmed frozen engine specifications (Structure v2.2 and SupplyDemand v1.1) match their actual MQL5 code headers.
+    *   Confirmed statistical figures match the updated 4-year validation report.
+
+---
+
+## 4. Specific Component Cross-Check
+
+### 4.1 Structure Engine v2.2 Check
 *   *Swings lookback*: `InpSwingLookback = 3` (verified in [StructureEngine.mqh:L214](file:///c:/xauusd_chatgpt/src/engines/StructureEngine.mqh#L214)).
 *   *BOS break multiplier*: `InpBOSBreakMultiplier = 0.25` (verified in [StructureEngine.mqh:L219](file:///c:/xauusd_chatgpt/src/engines/StructureEngine.mqh#L219)).
 *   *Local ATR*: Synchronous ATR calculation from High/Low arrays (verified in [StructureEngine.mqh:L296](file:///c:/xauusd_chatgpt/src/engines/StructureEngine.mqh#L296)).
 
-### 3.2 Supply & Demand Engine v1.1 Check
+### 4.2 Supply & Demand Engine v1.1 Check
 *   *Base Candle Expansion*: `1-6 base candles` (verified in [SupplyDemandEngine.mqh:L254-L277](file:///c:/xauusd_chatgpt/src/engines/SupplyDemandEngine.mqh#L254-L277)).
 *   *Reactions Count Invalidation Bar Excluded*: `stopBar = invalidatedBar + 1` (verified in [SupplyDemandEngine.mqh:L325](file:///c:/xauusd_chatgpt/src/engines/SupplyDemandEngine.mqh#L325)).
 *   *Age score linear decay*: `zone.impulseBarIndex - currentBarIdx` (verified in [SupplyDemandEngine.mqh:L373](file:///c:/xauusd_chatgpt/src/engines/SupplyDemandEngine.mqh#L373)).
 
-### 3.3 SNR Design Freeze Check
+### 4.3 SNR Design Freeze Check
 *   *Clustering Tolerance*: `0.25 * ATR` (verified in [SNR_ARCHITECTURE_FREEZE.md: Section 3.2](file:///c:/xauusd_chatgpt/docs/design/SNR_ARCHITECTURE_FREEZE.md#L45)).
 *   *Scoring Weights*: `Struct=0.20, SD=0.30, Fresh=0.20, Reject=0.20, Confl=0.10` (verified in [SNR_ARCHITECTURE_FREEZE.md: Section 7.1](file:///c:/xauusd_chatgpt/docs/design/SNR_ARCHITECTURE_FREEZE.md#L125)).
 
 ---
 
-## 4. Conclusion & Audit Statement
+## 5. Conclusion & Audit Statement
 
-The audit confirms that **[PROJECT_GENESIS.md](file:///c:/xauusd_chatgpt/PROJECT_GENESIS.md)** is a highly complete, accurate, and non-contradictory compilation of the project history, specifications, and architecture. It is certified as the **Single Source of Truth (SSOT) / Permanent Project Bible** for the XAUUSD Institutional Structure EA codebase.
+The audit confirms that the **Project Recovery Package** is a complete, mathematically precise, and unified Single Source of Truth (SSOT). It provides a full developer and AI agent transition path for continuation of Sprint 3.0 with zero loss of context.
+

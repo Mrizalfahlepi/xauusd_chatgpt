@@ -477,6 +477,8 @@ double CSupplyDemandEngine::GetATRValue(int barIndex)
 
 void CSupplyDemandEngine::LogMessage(string message)
 {
+#ifdef DEBUG_SUPPLY_DEMAND
    if(m_enableLog)
       Print("[SupplyDemandEngine] ", message);
+#endif
 }

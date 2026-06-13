@@ -350,6 +350,7 @@ bool CSnrPriorityEngine::Process(CSnrEngine* rawEngine, double currentPrice, dou
    {
       double distATR = MathAbs(tempTradSupport[i].priceMid - currentPrice) / atr;
       bool passed = (tempTradSupport[i].scoreTotal >= minScore && distATR <= maxTradableDistATR);
+#ifdef DEBUG_ATR_FILTER
       Print("DEBUG_ATR_FILTER: Support Candidate ID=", tempTradSupport[i].id, 
             " | priceMid=", DoubleToString(tempTradSupport[i].priceMid, 6), 
             " | currentPrice=", DoubleToString(currentPrice, 6), 
@@ -357,6 +358,7 @@ bool CSnrPriorityEngine::Process(CSnrEngine* rawEngine, double currentPrice, dou
             " | distATR=", DoubleToString(distATR, 8), 
             " | score=", DoubleToString(tempTradSupport[i].scoreTotal, 1),
             " | passed=", passed);
+#endif
       if(passed)
       {
          ArrayResize(filteredTradSupport, filteredTradSupCount + 1);
@@ -416,6 +418,7 @@ bool CSnrPriorityEngine::Process(CSnrEngine* rawEngine, double currentPrice, dou
    {
       double distATR = MathAbs(tempTradResistance[i].priceMid - currentPrice) / atr;
       bool passed = (tempTradResistance[i].scoreTotal >= minScore && distATR <= maxTradableDistATR);
+#ifdef DEBUG_ATR_FILTER
       Print("DEBUG_ATR_FILTER: Resistance Candidate ID=", tempTradResistance[i].id, 
             " | priceMid=", DoubleToString(tempTradResistance[i].priceMid, 6), 
             " | currentPrice=", DoubleToString(currentPrice, 6), 
@@ -423,6 +426,7 @@ bool CSnrPriorityEngine::Process(CSnrEngine* rawEngine, double currentPrice, dou
             " | distATR=", DoubleToString(distATR, 8), 
             " | score=", DoubleToString(tempTradResistance[i].scoreTotal, 1),
             " | passed=", passed);
+#endif
       if(passed)
       {
          ArrayResize(filteredTradResistance, filteredTradResCount + 1);

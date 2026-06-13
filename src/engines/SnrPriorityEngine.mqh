@@ -349,7 +349,15 @@ bool CSnrPriorityEngine::Process(CSnrEngine* rawEngine, double currentPrice, dou
    for(int i = 0; i < tempTradSupCount; i++)
    {
       double distATR = MathAbs(tempTradSupport[i].priceMid - currentPrice) / atr;
-      if(tempTradSupport[i].scoreTotal >= minScore && distATR <= maxTradableDistATR)
+      bool passed = (tempTradSupport[i].scoreTotal >= minScore && distATR <= maxTradableDistATR);
+      Print("DEBUG_ATR_FILTER: Support Candidate ID=", tempTradSupport[i].id, 
+            " | priceMid=", DoubleToString(tempTradSupport[i].priceMid, 6), 
+            " | currentPrice=", DoubleToString(currentPrice, 6), 
+            " | atr=", DoubleToString(atr, 6), 
+            " | distATR=", DoubleToString(distATR, 8), 
+            " | score=", DoubleToString(tempTradSupport[i].scoreTotal, 1),
+            " | passed=", passed);
+      if(passed)
       {
          ArrayResize(filteredTradSupport, filteredTradSupCount + 1);
          filteredTradSupport[filteredTradSupCount] = tempTradSupport[i];
@@ -407,7 +415,15 @@ bool CSnrPriorityEngine::Process(CSnrEngine* rawEngine, double currentPrice, dou
    for(int i = 0; i < tempTradResCount; i++)
    {
       double distATR = MathAbs(tempTradResistance[i].priceMid - currentPrice) / atr;
-      if(tempTradResistance[i].scoreTotal >= minScore && distATR <= maxTradableDistATR)
+      bool passed = (tempTradResistance[i].scoreTotal >= minScore && distATR <= maxTradableDistATR);
+      Print("DEBUG_ATR_FILTER: Resistance Candidate ID=", tempTradResistance[i].id, 
+            " | priceMid=", DoubleToString(tempTradResistance[i].priceMid, 6), 
+            " | currentPrice=", DoubleToString(currentPrice, 6), 
+            " | atr=", DoubleToString(atr, 6), 
+            " | distATR=", DoubleToString(distATR, 8), 
+            " | score=", DoubleToString(tempTradResistance[i].scoreTotal, 1),
+            " | passed=", passed);
+      if(passed)
       {
          ArrayResize(filteredTradResistance, filteredTradResCount + 1);
          filteredTradResistance[filteredTradResCount] = tempTradResistance[i];

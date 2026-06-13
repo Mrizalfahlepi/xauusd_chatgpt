@@ -33,10 +33,10 @@ The following table maps the authoritative sources of truth in the repository th
 | **[MILESTONE_GENESIS_FREEZE.md](file:///c:/xauusd_chatgpt/MILESTONE_GENESIS_FREEZE.md)** | Repository Tree & Statistical Baseline | States the frozen version baselines (Structure v2.2, SupplyDemand v1.1) and initial Git state. |
 | **[SYSTEM_ROADMAP.md](file:///c:/xauusd_chatgpt/SYSTEM_ROADMAP.md)** | Phase-by-phase development roadmap | Places the SNR Engine as Module 3 and Liquidity as Module 4. |
 | **[SNR_ARCHITECTURE_FREEZE.md](file:///c:/xauusd_chatgpt/docs/design/SNR_ARCHITECTURE_FREEZE.md)** | Frozen Design Specification | Dictates the exact clustering math, merge rules, scoring weights, and data structures. |
-| **[SPRINT_3_EXECUTION_PLAN.md](file:///c:/xauusd_chatgpt/SPRINT_3_EXECUTION_PLAN.md)** | Implementation Sequence & Checklist | Breakdowns the 24 steps of execution, class layout, testing strategy, and input parameters. |
-| **[SNR_VISUAL_SPEC.md](file:///c:/xauusd_chatgpt/SNR_VISUAL_SPEC.md)** | Validator Visual Specification | Outlines color mappings (Gold/Blue/Purple/Gray), dashboard layouts, and object naming schemes. |
-| **[SNR_COMPILE_AUDIT.md](file:///c:/xauusd_chatgpt/SNR_COMPILE_AUDIT.md)** | Compile Audit (Step 17) | Documents compile check of `SnrEngine.mqh` under MetaEditor (0 errors, 0 warnings). |
-| **[TESTSNR_COMPILE_AUDIT.md](file:///c:/xauusd_chatgpt/TESTSNR_COMPILE_AUDIT.md)** | Compile Audit (Step 18-19) | Documents compile check of `TestSnr.mq5` validator (0 errors, 0 warnings). |
+| **[SPRINT_3_EXECUTION_PLAN.md](file:///c:/xauusd_chatgpt/docs/archive/SPRINT_3_EXECUTION_PLAN.md)** | Implementation Sequence & Checklist | Breakdowns the 24 steps of execution, class layout, testing strategy, and input parameters. |
+| **[SNR_VISUAL_SPEC.md](file:///c:/xauusd_chatgpt/docs/design/SNR_VISUAL_SPEC.md)** | Validator Visual Specification | Outlines color mappings (Gold/Blue/Purple/Gray), dashboard layouts, and object naming schemes. |
+| **[SNR_COMPILE_AUDIT.md](file:///c:/xauusd_chatgpt/docs/audits/SNR_COMPILE_AUDIT.md)** | Compile Audit (Step 17) | Documents compile check of `SnrEngine.mqh` under MetaEditor (0 errors, 0 warnings). |
+| **[TESTSNR_COMPILE_AUDIT.md](file:///c:/xauusd_chatgpt/docs/audits/TESTSNR_COMPILE_AUDIT.md)** | Compile Audit (Step 18-19) | Documents compile check of `TestSnr.mq5` validator (0 errors, 0 warnings). |
 
 ---
 
@@ -85,22 +85,22 @@ To guarantee documentation alignment, the physical files on disk have been audit
    * **Location**: [SnrEngine.mqh](file:///c:/xauusd_chatgpt/src/engines/SnrEngine.mqh)
    * **Size & Line Count**: 1,306 lines (46,623 bytes).
    * **Git Hash**: Committed under `c757100` (WIP: Sprint 3 SNR Engine recovery checkpoint).
-   * **Verification**: Structs `RawLevel`, `SNRLevel`, and `LiquidityPool` are defined exactly matching sections 4.1 & 4.2 of [SPRINT_3_EXECUTION_PLAN.md](file:///c:/xauusd_chatgpt/SPRINT_3_EXECUTION_PLAN.md).
+   * **Verification**: Structs `RawLevel`, `SNRLevel`, and `LiquidityPool` are defined exactly matching sections 4.1 & 4.2 of [SPRINT_3_EXECUTION_PLAN.md](file:///c:/xauusd_chatgpt/docs/archive/SPRINT_3_EXECUTION_PLAN.md).
 
 2. **`src/tests/TestSnr.mq5`**
    * **Location**: [TestSnr.mq5](file:///c:/xauusd_chatgpt/src/tests/TestSnr.mq5)
    * **Size & Line Count**: 597 lines (28,367 bytes).
-   * **Verification**: Implements a complete validator EA running `CStructureEngine`, `CSupplyDemandEngine`, and `CSnrEngine` on new H4 bars. Implements drawing objects for levels (`SNR_LVL_`), liquidity pools (`SNR_POOL_`) and the info panel (`SNR_PNL_`) using the font `Consolas` and colors mapped in [SNR_VISUAL_SPEC.md](file:///c:/xauusd_chatgpt/SNR_VISUAL_SPEC.md).
+   * **Verification**: Implements a complete validator EA running `CStructureEngine`, `CSupplyDemandEngine`, and `CSnrEngine` on new H4 bars. Implements drawing objects for levels (`SNR_LVL_`), liquidity pools (`SNR_POOL_`) and the info panel (`SNR_PNL_`) using the font `Consolas` and colors mapped in [SNR_VISUAL_SPEC.md](file:///c:/xauusd_chatgpt/docs/design/SNR_VISUAL_SPEC.md).
 
 3. **Compiler Status Audits**
-   * **Engine**: [SNR_COMPILE_AUDIT.md](file:///c:/xauusd_chatgpt/SNR_COMPILE_AUDIT.md) verifies `SnrEngine.mqh` compiled with 0 errors/warnings via wrapper.
-   * **Validator**: [TESTSNR_COMPILE_AUDIT.md](file:///c:/xauusd_chatgpt/TESTSNR_COMPILE_AUDIT.md) verifies `TestSnr.mq5` compiled with 0 errors/warnings.
+   * **Engine**: [SNR_COMPILE_AUDIT.md](file:///c:/xauusd_chatgpt/docs/audits/SNR_COMPILE_AUDIT.md) verifies `SnrEngine.mqh` compiled with 0 errors/warnings via wrapper.
+   * **Validator**: [TESTSNR_COMPILE_AUDIT.md](file:///c:/xauusd_chatgpt/docs/audits/TESTSNR_COMPILE_AUDIT.md) verifies `TestSnr.mq5` compiled with 0 errors/warnings.
 
 ---
 
 ## 5. Architectural & Implementation Deviations Noted
 
-By comparing the codebase implementation to [SPRINT_3_EXECUTION_PLAN.md](file:///c:/xauusd_chatgpt/SPRINT_3_EXECUTION_PLAN.md), the following minor deviations were verified as physically present and accepted:
+By comparing the codebase implementation to [SPRINT_3_EXECUTION_PLAN.md](file:///c:/xauusd_chatgpt/docs/archive/SPRINT_3_EXECUTION_PLAN.md), the following minor deviations were verified as physically present and accepted:
 
 * **Merge Logic Modularization**: Instead of a standalone `MergeOverlappingZones()` method, the same-type zone merging logic is handled inline within `FinalizeCluster()` (L655–L701 of `SnrEngine.mqh`).
 * **Scoring Modularization**: The 5 scoring sub-metrics are calculated inline inside `ScoreLevels()` rather than split into 5 private helper functions.

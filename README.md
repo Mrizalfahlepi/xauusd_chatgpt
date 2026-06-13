@@ -24,6 +24,7 @@
 ## ❄️ CURRENT PROJECT STATUS
 
 > [!IMPORTANT]
+> **Authoritative Project Status**: [CURRENT_PROJECT_STATE.md](CURRENT_PROJECT_STATE.md)  
 > **Current Phase**: Phase 4 — Liquidity Engine  
 > **Frozen Modules**:  
 > * `StructureEngine` (v2.2)  
@@ -178,17 +179,19 @@ The Supply/Demand fixes alone exposed the true **2.27% false-positive rate**, va
 ROOT/
 ├── PROJECT_GENESIS.md           ← Master project bible (single source of truth)
 ├── AGENT_CONSTITUTION.md        ← Permanent operating law for AI agents
-├── MILESTONE_SPRINT_3_FREEZE.md  ← Current frozen-state snapshot (Sprint 3)
+├── CURRENT_PROJECT_STATE.md     ← Authoritative project status entrypoint
+├── MILESTONE_GENESIS_FREEZE.md  ← Genesis milestone snapshot
+├── MILESTONE_SPRINT_3_FREEZE.md ← Current frozen-state snapshot (Sprint 3)
 ├── SYSTEM_ROADMAP.md            ← 8-phase development roadmap
-├── README.md                    ← Recovery entrypoint (read-first protocol)
-├── ARTICLE.md                   ← You are here 📍
+├── README.md                    ← Main GitHub landing page
+├── RECOVERY_ENTRYPOINT.md       ← AI Agent Recovery entry point
 │
 ├── docs/
-│   ├── core/      ← Definitions, architecture, coding rules, status
-│   ├── design/    ← Frozen design specs (SNR, Supply/Demand)
-│   ├── audits/    ← Independent engine audit reports
-│   ├── reports/   ← Statistical & validation reports
-│   └── archive/   ← Superseded historical docs
+│   ├── core/      ← Definitions, architecture, lessons learned, risk register
+│   ├── design/    ← Frozen design specs & plans (SNR, S/D, visual specs)
+│   ├── audits/    ← Verification audits & checkpoint reports
+│   ├── reports/   ← Validation & statistical reports (RECOVERY_REPORT.md)
+│   └── archive/   ← Superseded historical docs (ARTICLE.md, note_for_user.md)
 │
 └── src/
     ├── engines/   ← StructureEngine.mqh · SupplyDemandEngine.mqh · SnrEngine.mqh · SnrPriorityEngine.mqh
@@ -225,7 +228,7 @@ Build the Liquidity Engine to detect and process order stops above and below swi
 
 ### 📚 Start Here
 
-[**PROJECT_GENESIS.md**](PROJECT_GENESIS.md) · [**AGENT_CONSTITUTION.md**](AGENT_CONSTITUTION.md) · [**SYSTEM_ROADMAP.md**](SYSTEM_ROADMAP.md) · [**MILESTONE_SPRINT_3_FREEZE.md**](MILESTONE_SPRINT_3_FREEZE.md)
+[**CURRENT_PROJECT_STATE.md**](CURRENT_PROJECT_STATE.md) · [**PROJECT_GENESIS.md**](PROJECT_GENESIS.md) · [**AGENT_CONSTITUTION.md**](AGENT_CONSTITUTION.md) · [**SYSTEM_ROADMAP.md**](SYSTEM_ROADMAP.md) · [**MILESTONE_SPRINT_3_FREEZE.md**](MILESTONE_SPRINT_3_FREEZE.md)
 
 🤖 **AI agents / contributors start here →** [**RECOVERY_ENTRYPOINT.md**](RECOVERY_ENTRYPOINT.md)
 

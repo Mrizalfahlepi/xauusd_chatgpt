@@ -1,80 +1,130 @@
-# Repository Refactor Plan
+# Repository Refactor Plan (Sprint 3.5A)
 
-**Author**: Market Structure & Architecture Auditor  
-**Date**: June 12, 2026  
-**Status**: DRAFT PLAN (No files moved yet)  
+**Author**: Market Structure & Architecture Team  
+**Date**: June 13, 2026  
+**Status**: APPROVED & COMPLETE  
 **Workspace**: `c:\xauusd_chatgpt`
 
 ---
 
-## 1. Proposed Folder Structure
+## 1. Objective
 
-To clean up the repository root and isolate source code from documentation and testing scripts, the following unified directory tree is proposed:
+The objective of this refactor is to normalize the repository structure by cleaning the root directory of all temporary, analytical, and audit files generated during the Sprint 3.0 SNR engine implementation. This ensures long-term maintainability and allows a future AI agent to recover project state in less than 2 minutes while preserving 100% of project history and evidence.
+
+---
+
+## 2. Final Repository Tree
+
+The refactored workspace is structured as follows:
 
 ```
-/xauusd_chatgpt
-├── .git/
-├── .gitignore
-├── REPOSITORY_ARCHITECTURE_AUDIT.md
-├── REPOSITORY_REFACTOR_PLAN.md
+c:\xauusd_chatgpt\ (Root)
+├── .gitignore                          ← Git configuration
+├── AGENT_CONSTITUTION.md               ← Permanent operating law
+├── CURRENT_PROJECT_STATE.md            ← Authoritative project status entrypoint
+├── MILESTONE_GENESIS_FREEZE.md         ← Milestone snapshot of Genesis freeze
+├── MILESTONE_SPRINT_3_FREEZE.md        ← Current frozen-state snapshot (Sprint 3)
+├── PROJECT_GENESIS.md                  ← Project history & single source of truth
+├── PROJECT_RECOVERY_PROTOCOL.md        ← Onboarding procedure
+├── README.md                           ← Main GitHub entry point
+├── RECOVERY_ENTRYPOINT.md              ← Recovery entry point for AI agents
+├── SYSTEM_ROADMAP.md                   ← Development roadmap
+│
 ├── docs/
-│   ├── core/           # General specifications and system rules
-│   ├── design/         # Module-specific design files (frozen specs)
-│   ├── audits/         # Authoritative code audits and audits of design phases
-│   ├── reports/        # Backtest statistics and analytical reports
-│   └── archive/        # Superseded, temporary, and historical validation files
-├── src/
-│   ├── engines/        # Production MQL5 source code (.mqh files)
-│   └── tests/          # Chart validation EAs (.mq5 files)
+│   ├── archive/                        ← Historical/superseded documents
+│   │   ├── ARTICLE.md
+│   │   ├── SPRINT_3_EXECUTION_PLAN.md
+│   │   ├── SNR_DATA_FLOW.md
+│   │   ├── SNR_ENGINE_DESIGN.md
+│   │   ├── SNR_SCORING_MODEL.md
+│   │   ├── STRUCTURE_ENGINE_EVIDENCE_REPORT.md
+│   │   ├── STRUCTURE_ENGINE_FINAL_VALIDATION.md
+│   │   ├── structure_engine_audit.md
+│   │   ├── SUPPLY_DEMAND_AUDIT.md
+│   │   ├── SUPPLY_DEMAND_STATISTICAL_REPORT.md
+│   │   ├── SUPPLY_DEMAND_VALIDATION.md
+│   │   ├── SUPPLY_DEMAND_VERIFICATION_REPORT.md
+│   │   └── note_for_user.md
+│   │
+│   ├── audits/                         ← Audit reports
+│   │   ├── AGENT_CONSTITUTION_AUDIT.md
+│   │   ├── GENESIS_COMPLETENESS_AUDIT.md
+│   │   ├── LESSONS_LEARNED_AUDIT.md
+│   │   ├── RECOVERY_ALIGNMENT_AUDIT.md
+│   │   ├── REPOSITORY_NORMALIZATION_AUDIT.md
+│   │   ├── REREPOSITORY_ARCHITECTURE_AUDIT.md
+│   │   ├── REPOSITORY_REFACTOR_EXECUTION_REPORT.md
+│   │   ├── SNR_COMPILE_AUDIT.md
+│   │   ├── SNR_DESIGN_AUDIT.md
+│   │   ├── SNR_ENGINE_V10_AUDIT.md
+│   │   ├── SNR_OUTPUT_OPTIMIZATION_AUDIT.md
+│   │   ├── SNR_SCORE_VALIDATION_AUDIT.md
+│   │   ├── SNR_VISUAL_USABILITY_AUDIT.md
+│   │   ├── SPRINT_3_CHECKPOINT_AUDIT.md
+│   │   ├── SPRINT_3_RECOVERY_AUDIT.md
+│   │   ├── STRUCTURE_ENGINE_V22_AUDIT.md
+│   │   ├── SUPPLY_DEMAND_CONSISTENCY_AUDIT.md
+│   │   ├── SUPPLY_DEMAND_V11_AUDIT.md
+│   │   ├── TESTSNR_COMPILE_AUDIT.md
+-------------
+│   │   ├── TOP_N_AUDIT_EVIDENCE.md
+│   │   └── TOP_N_OPTIMALITY_AUDIT.md
+│   │
+│   ├── core/                           ← Core documentation & memory
+│   │   ├── 01_MARKET_DEFINITIONS.md
+│   │   ├── 02_SYSTEM_ARCHITECTURE.md
+│   │   ├── 03_CODING_RULES.md
+│   │   ├── 04_DESIGN_DECISIONS.md
+│   │   ├── 05_CURRENT_STATUS.md
+│   │   ├── 08_AGENT_ONBOARDING.md
+│   │   ├── LESSONS_LEARNED.md
+│   │   ├── PROJECT_MEMORY.md
+│   │   ├── PROJECT_STATE_REVIEW.md
+│   │   └── SPRINT_3_RISK_REGISTER.md
+│   │
+│   ├── design/                         ← Frozen specifications & plans
+│   │   ├── REPOSITORY_REFACTOR_PLAN.md
+│   │   ├── SNR_ARCHITECTURE_FREEZE.md
+│   │   ├── SNR_VISUAL_SPEC.md
+│   │   ├── SPRINT_3_4_IMPLEMENTATION_PLAN.md
+│   │   └── SUPPLY_DEMAND_DESIGN.md
+│   │
+│   └── reports/                        ← Validation and statistical reports
+│       ├── RECOVERY_REPORT.md
+│       ├── RECOVERY_VALIDATION.md
+│       ├── SNR_OUTCOME_VALIDATION_REPORT.md
+│       ├── SNR_STATISTICAL_REPORT.md
+│       ├── SNR_VISUAL_VALIDATION_REPORT.md
+│       ├── UPDATED_SUPPLY_DEMAND_STATISTICAL_REPORT.md
+│       └── top_n_raw_metrics.csv
+│
+└── src/                                ← Trading engine source code & tests (UNCHANGED)
+    ├── engines/
+    │   ├── SnrEngine.mqh
+    │   ├── SnrPriorityEngine.mqh
+    │   ├── StructureEngine.mqh
+    │   └── SupplyDemandEngine.mqh
+    └── tests/
+        ├── TestSnr.ex5
+        ├── TestSnr.mq5
+        ├── TestStructure.mq5
+        └── TestSupplyDemand.mq5
 ```
 
 ---
 
-## 2. File Migration Map
+## 3. Migration Details
 
-The table below defines the exact relocation paths for every file in the repository. As per architectural instructions, **no file moves or deletions will be executed during this freeze stage**.
-
-| Current Path | Proposed Relocated Path | Classification |
-| :--- | :--- | :---: |
-| `/.gitignore` | `/.gitignore` (No Change) | **FINAL** |
-| `/REPOSITORY_ARCHITECTURE_AUDIT.md` | `/REPOSITORY_ARCHITECTURE_AUDIT.md` (No Change) | **FINAL** |
-| `/REPOSITORY_REFACTOR_PLAN.md` | `/REPOSITORY_REFACTOR_PLAN.md` (No Change) | **FINAL** |
-| `/01_MARKET_DEFINITIONS.md` | `/docs/core/01_MARKET_DEFINITIONS.md` | **FINAL** |
-| `/02_SYSTEM_ARCHITECTURE.md` | `/docs/core/02_SYSTEM_ARCHITECTURE.md` | **FINAL** |
-| `/03_CODING_RULES.md` | `/docs/core/03_CODING_RULES.md` | **FINAL** |
-| `/04_DESIGN_DECISIONS.md` | `/docs/core/04_DESIGN_DECISIONS.md` | **FINAL** |
-| `/05_CURRENT_STATUS.md` | `/docs/core/05_CURRENT_STATUS.md` | **FINAL** |
-| `/08_AGENT_ONBOARDING.md` | `/docs/core/08_AGENT_ONBOARDING.md` | **FINAL** |
-| `/PROJECT_MEMORY.md` | `/docs/core/PROJECT_MEMORY.md` | **FINAL** |
-| `/PROJECT_STATE_REVIEW.md` | `/docs/core/PROJECT_STATE_REVIEW.md` | **FINAL** |
-| `/SUPPLY_DEMAND_DESIGN.md` | `/docs/design/SUPPLY_DEMAND_DESIGN.md` | **FINAL** |
-| `/SNR_ENGINE_DESIGN.md` | `/docs/archive/SNR_ENGINE_DESIGN.md` | **SUPERSEDED** |
-| `/SNR_SCORING_MODEL.md` | `/docs/archive/SNR_SCORING_MODEL.md` | **SUPERSEDED** |
-| `/SNR_DATA_FLOW.md` | `/docs/archive/SNR_DATA_FLOW.md` | **SUPERSEDED** |
-| `/SNR_ARCHITECTURE_FREEZE.md` (To Be Created) | `/docs/design/SNR_ARCHITECTURE_FREEZE.md` | **ACTIVE DESIGN** |
-| `/STRUCTURE_ENGINE_V22_AUDIT.md` | `/docs/audits/STRUCTURE_ENGINE_V22_AUDIT.md` | **FINAL** |
-| `/SUPPLY_DEMAND_V11_AUDIT.md` | `/docs/audits/SUPPLY_DEMAND_V11_AUDIT.md` | **FINAL** |
-| `/SUPPLY_DEMAND_CONSISTENCY_AUDIT.md` | `/docs/audits/SUPPLY_DEMAND_CONSISTENCY_AUDIT.md` | **FINAL** |
-| `/SNR_DESIGN_AUDIT.md` | `/docs/audits/SNR_DESIGN_AUDIT.md` | **FINAL** |
-| `/structure_engine_audit.md` | `/docs/archive/structure_engine_audit.md` | **SUPERSEDED** |
-| `/SUPPLY_DEMAND_AUDIT.md` | `/docs/archive/SUPPLY_DEMAND_AUDIT.md` | **SUPERSEDED** |
-| `/SUPPLY_DEMAND_STATISTICAL_REPORT.md` | `/docs/archive/SUPPLY_DEMAND_STATISTICAL_REPORT.md` | **SUPERSEDED** |
-| `/UPDATED_SUPPLY_DEMAND_STATISTICAL_REPORT.md` | `/docs/reports/UPDATED_SUPPLY_DEMAND_STATISTICAL_REPORT.md` | **FINAL** |
-| `/STRUCTURE_ENGINE_EVIDENCE_REPORT.md` | `/docs/archive/STRUCTURE_ENGINE_EVIDENCE_REPORT.md` | **TEMPORARY** |
-| `/STRUCTURE_ENGINE_FINAL_VALIDATION.md` | `/docs/archive/STRUCTURE_ENGINE_FINAL_VALIDATION.md` | **ARCHIVE** |
-| `/SUPPLY_DEMAND_VALIDATION.md` | `/docs/archive/SUPPLY_DEMAND_VALIDATION.md` | **ARCHIVE** |
-| `/SUPPLY_DEMAND_VERIFICATION_REPORT.md` | `/docs/archive/SUPPLY_DEMAND_VERIFICATION_REPORT.md` | **ARCHIVE** |
-| `/StructureEngine.mqh` | `/src/engines/StructureEngine.mqh` | **ACTIVE ENGINE** |
-| `/SupplyDemandEngine.mqh` | `/src/engines/SupplyDemandEngine.mqh` | **ACTIVE ENGINE** |
-| `/TestStructure.mq5` | `/src/tests/TestStructure.mq5` | **ACTIVE ENGINE** |
-| `/TestSupplyDemand.mq5` | `/src/tests/TestSupplyDemand.mq5` | **ACTIVE ENGINE** |
+### Revisions Approved by Project Owner
+1. **`MILESTONE_GENESIS_FREEZE.md`** was retained in the root directory as permanent baseline documentation.
+2. **`RECOVERY_REPORT.md`** was moved to `docs/reports/` to keep root strictly for landing entrypoints.
+3. **`SPRINT_3_RISK_REGISTER.md`** was reclassified as core project documentation and moved to `docs/core/`.
+4. **`CURRENT_PROJECT_STATE.md`** was created at root as the single authoritative project status entrypoint.
+5. **`note for user.md`** was renamed to `note_for_user.md` inside `docs/archive/` to standardize the naming convention.
 
 ---
 
-## 3. Execution Requirements
+## 4. Link & Import Updates
 
-1.  **Refactor Timing**: Refactoring must take place **after** Sprint 2.3 is approved and before *any* Sprint 3.0 MQL5 source files are initialized.
-2.  **Includes Updates**: When files are moved to their respective folders, the `#include` statements in validation EAs must be adjusted:
-    *   `/src/tests/TestStructure.mq5` will update `#include "StructureEngine.mqh"` to `#include "../engines/StructureEngine.mqh"`.
-    *   `/src/tests/TestSupplyDemand.mq5` will update `#include "SupplyDemandEngine.mqh"` to `#include "../engines/SupplyDemandEngine.mqh"`.
-    *   `/src/engines/SupplyDemandEngine.mqh` will update `#include "StructureEngine.mqh"` to `#include "StructureEngine.mqh"` (since both remain in the same `/src/engines/` directory, no relative path change is needed between them).
+All relative markdown links and absolute links referencing the moved files were updated dynamically. No include files in `/src/` required modification as the engine and test source code hierarchy was not altered.
+All tests were compiled using `copy_and_compile.ps1` to verify path integrity, returning 0 errors and 0 warnings.

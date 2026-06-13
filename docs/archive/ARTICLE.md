@@ -208,7 +208,7 @@ Build `src/engines/SnrEngine.mqh`, translating the approved design freeze into M
 
 ### 📚 Start Here
 
-[**PROJECT_GENESIS.md**](PROJECT_GENESIS.md) · [**AGENT_CONSTITUTION.md**](AGENT_CONSTITUTION.md) · [**SYSTEM_ROADMAP.md**](SYSTEM_ROADMAP.md) · [**MILESTONE_GENESIS_FREEZE.md**](MILESTONE_GENESIS_FREEZE.md)
+[**PROJECT_GENESIS.md**](../../PROJECT_GENESIS.md) · [**AGENT_CONSTITUTION.md**](../../AGENT_CONSTITUTION.md) · [**SYSTEM_ROADMAP.md**](../../SYSTEM_ROADMAP.md) · [**MILESTONE_GENESIS_FREEZE.md**](../../MILESTONE_GENESIS_FREEZE.md)
 
 <br/>
 

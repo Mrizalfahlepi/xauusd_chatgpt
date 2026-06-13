@@ -3,9 +3,9 @@
 **Date**: 2026-06-13T04:38Z  
 **Phase**: Sprint 3.2B — Audit Validation Phase (Evidence and Traceability Report)  
 **Auditor**: Antigravity Agent  
-**Target File Verified**: [TOP_N_OPTIMALITY_AUDIT.md](file:///c:/xauusd_chatgpt/TOP_N_OPTIMALITY_AUDIT.md)  
+**Target File Verified**: [TOP_N_OPTIMALITY_AUDIT.md](file:///c:/xauusd_chatgpt/docs/audits/TOP_N_OPTIMALITY_AUDIT.md)  
 **Raw Source File**: [latest_snr_stat_run.log](file:///C:/Users/rositapermata33/.gemini/antigravity-ide/scratch/latest_snr_stat_run.log) (327 MB)  
-**CSV Data File**: [top_n_raw_metrics.csv](file:///c:/xauusd_chatgpt/top_n_raw_metrics.csv)  
+**CSV Data File**: [top_n_raw_metrics.csv](file:///c:/xauusd_chatgpt/docs/reports/top_n_raw_metrics.csv)  
 **Verdict**: 🟡 **PARTIALLY VERIFIED, NOT FULLY VERIFIED** (Under Review with Extended Evidence)
 
 ---
@@ -15,7 +15,7 @@
 All calculations are derived from the 4-year backtest log file [latest_snr_stat_run.log](file:///C:/Users/rositapermata33/.gemini/antigravity-ide/scratch/latest_snr_stat_run.log), which spans **2022.01.01 to 2025.12.31** on the XAUUSD H4 timeframe.
 
 ### 1.1 Master Raw Metrics Table
-Below are the exact raw counts extracted from the log file by the validation script. These represent the absolute numerators and denominators used across all tables. They are exported in CSV format to [top_n_raw_metrics.csv](file:///c:/xauusd_chatgpt/top_n_raw_metrics.csv):
+Below are the exact raw counts extracted from the log file by the validation script. These represent the absolute numerators and denominators used across all tables. They are exported in CSV format to [top_n_raw_metrics.csv](file:///c:/xauusd_chatgpt/docs/reports/top_n_raw_metrics.csv):
 
 * **Total Bars Evaluated**: `7,450` H4 bars (with level details printed)
 * **All Levels Observation Count**: `176,685` consolidated levels

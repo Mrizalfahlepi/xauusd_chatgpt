@@ -133,8 +133,8 @@ Raw H4 Price Data
 
 | Component | Version | File | Features | Freeze Proof |
 |-----------|---------|------|----------|-------------|
-| **StructureEngine** | v2.2 | `src/engines/StructureEngine.mqh` (51,282 bytes) | Fractal N=3 swings, ATR grading, non-repainting BOS/MSS, consecutive trend, local sync ATR | 4-year backtest, [audit passed](docs/audits/STRUCTURE_ENGINE_V22_AUDIT.md) |
-| **SupplyDemandEngine** | v1.1 | `src/engines/SupplyDemandEngine.mqh` (17,284 bytes) | Impulse-base zones (1-6 candles), H4 close invalidation, corrected age decay, excluded breach bar | 4-year backtest, 97.73% reliability, [audit passed](docs/audits/SUPPLY_DEMAND_V11_AUDIT.md) |
+| **StructureEngine** | v2.2 | `src/engines/StructureEngine.mqh` (51,282 bytes) | Fractal N=3 swings, ATR grading, non-repainting BOS/MSS, consecutive trend, local sync ATR | 4-year backtest, [audit passed](../audits/STRUCTURE_ENGINE_V22_AUDIT.md) |
+| **SupplyDemandEngine** | v1.1 | `src/engines/SupplyDemandEngine.mqh` (17,284 bytes) | Impulse-base zones (1-6 candles), H4 close invalidation, corrected age decay, excluded breach bar | 4-year backtest, 97.73% reliability, [audit passed](../audits/SUPPLY_DEMAND_V11_AUDIT.md) |
 
 ### Design Frozen
 
@@ -212,7 +212,7 @@ All 7 major bugs and 1 design-phase finding from LESSONS_LEARNED.md are confirme
 
 ### Sprint 3.0: SNR Engine Implementation
 
-**Goal**: Translate the approved [SNR_ARCHITECTURE_FREEZE.md](docs/design/SNR_ARCHITECTURE_FREEZE.md) into production MQL5 code.
+**Goal**: Translate the approved [SNR_ARCHITECTURE_FREEZE.md](../design/SNR_ARCHITECTURE_FREEZE.md) into production MQL5 code.
 
 **Deliverables**:
 - `src/engines/SnrEngine.mqh` — SNR Engine v1.0

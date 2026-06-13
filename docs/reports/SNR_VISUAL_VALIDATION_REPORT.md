@@ -25,7 +25,7 @@ The visual validation test was conducted programmatically using the MetaTrader 5
 
 ## 2. Objects Verified
 
-The validation verified that all visual objects are created, managed, and rendered in accordance with [SNR_VISUAL_SPEC.md](file:///c:/xauusd_chatgpt/SNR_VISUAL_SPEC.md):
+The validation verified that all visual objects are created, managed, and rendered in accordance with [SNR_VISUAL_SPEC.md](file:///c:/xauusd_chatgpt/docs/design/SNR_VISUAL_SPEC.md):
 
 1. **SNR Level Bands (`SNR_LVL_{id}`)**
    * Solid filled background rectangles (`OBJ_RECTANGLE`) drawn from level `creationTime` to current bar time.
@@ -109,7 +109,7 @@ This confirms that the scoring logic matches the design freeze with **100% mathe
 
 ### **VERDICT: PASS**
 
-The visual representation matches [SNR_ARCHITECTURE_FREEZE.md](file:///c:/xauusd_chatgpt/docs/design/SNR_ARCHITECTURE_FREEZE.md) and [SNR_VISUAL_SPEC.md](file:///c:/xauusd_chatgpt/SNR_VISUAL_SPEC.md) in every test case.
+The visual representation matches [SNR_ARCHITECTURE_FREEZE.md](file:///c:/xauusd_chatgpt/docs/design/SNR_ARCHITECTURE_FREEZE.md) and [SNR_VISUAL_SPEC.md](file:///c:/xauusd_chatgpt/docs/design/SNR_VISUAL_SPEC.md) in every test case.
 
 ---
 

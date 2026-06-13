@@ -5,10 +5,10 @@
 **Status**: APPROVED BASELINE  
 **Target Module**: `SnrEngine.mqh` (Sprint 3.0)  
 **Source Documents**:
-- [PROJECT_GENESIS.md](PROJECT_GENESIS.md)
-- [LESSONS_LEARNED.md](LESSONS_LEARNED.md)
-- [SNR_ARCHITECTURE_FREEZE.md](docs/design/SNR_ARCHITECTURE_FREEZE.md)
-- [SNR_DESIGN_AUDIT.md](docs/audits/SNR_DESIGN_AUDIT.md)
+- [PROJECT_GENESIS.md](../../PROJECT_GENESIS.md)
+- [LESSONS_LEARNED.md](../../docs/core/LESSONS_LEARNED.md)
+- [SNR_ARCHITECTURE_FREEZE.md](../design/SNR_ARCHITECTURE_FREEZE.md)
+- [SNR_DESIGN_AUDIT.md](../audits/SNR_DESIGN_AUDIT.md)
 
 ---
 
@@ -46,7 +46,7 @@ Every risk is traced back to a historical failure, a design audit finding, or a 
 | **Impact** | **HIGH** — unguarded division corrupts all clustering, scoring, and liquidity pool calculations. The entire output array becomes mathematically invalid. |
 | **Historical Precedent** | Bug 5 (LESSONS_LEARNED §3, Bug 5): StructureEngine v2.1 received `0.0` from `iATR()` during Strategy Tester runs, classifying 56/58 swings as Minor. The entire grading system was destroyed. |
 | **Detection Method** | Log `[WARNING] ATR = 0.0 at barIndex = X` for every zero-ATR event. Add assertion: if total zero-ATR warnings exceed 20 in a single backtest, flag as FAIL. |
-| **Mitigation Strategy** | 1. Guard every ATR usage: `if(atr <= 0.0) continue;` or `return;`. 2. Skip all analysis for bars where ATR is invalid. 3. Mirror the exact guard pattern from [StructureEngine.mqh L447](src/engines/StructureEngine.mqh) and [SupplyDemandEngine.mqh L237](src/engines/SupplyDemandEngine.mqh). |
+| **Mitigation Strategy** | 1. Guard every ATR usage: `if(atr <= 0.0) continue;` or `return;`. 2. Skip all analysis for bars where ATR is invalid. 3. Mirror the exact guard pattern from [StructureEngine.mqh L447](../../src/engines/StructureEngine.mqh) and [SupplyDemandEngine.mqh L237](../../src/engines/SupplyDemandEngine.mqh). |
 | **Severity** | **CRITICAL** |
 
 ---
@@ -74,7 +74,7 @@ Every risk is traced back to a historical failure, a design audit finding, or a 
 | **Root Cause** | MQL5 struct constructors do not default-initialize primitive members. Unlike C++ `{}` initialization, MQL5 requires explicit assignment in the constructor. |
 | **Probability** | **HIGH** — will occur unless constructors are written correctly. |
 | **Impact** | **MEDIUM** — false confluence flags, incorrect neutral node detection, phantom liquidity sweeps. Subtle scoring errors that are difficult to trace. |
-| **Historical Precedent** | Both `SwingPoint` ([StructureEngine.mqh L105-119](src/engines/StructureEngine.mqh)) and `BOSEvent` ([StructureEngine.mqh L134-144](src/engines/StructureEngine.mqh)) have explicit constructors initializing every member. This pattern was adopted after early garbage-value issues. |
+| **Historical Precedent** | Both `SwingPoint` ([StructureEngine.mqh L105-119](../../src/engines/StructureEngine.mqh)) and `BOSEvent` ([StructureEngine.mqh L134-144](../../src/engines/StructureEngine.mqh)) have explicit constructors initializing every member. This pattern was adopted after early garbage-value issues. |
 | **Detection Method** | Code review: verify every struct has a constructor. Log initial values of newly created levels to confirm all booleans start `false` and all scores start `0.0`. |
 | **Mitigation Strategy** | Write explicit constructors for `SNRLevel`, `LiquidityPool`, and `RawLevel` that initialize every member to its default value. Follow the exact pattern from upstream structs. |
 | **Severity** | **HIGH** |
@@ -89,7 +89,7 @@ Every risk is traced back to a historical failure, a design audit finding, or a 
 | **Root Cause** | XAUUSD prices are stored as `double` with 15-17 significant digits. Upstream engines may store `2641.993` while the BOS event stores `2641.9930000000001` due to arithmetic operations. |
 | **Probability** | **HIGH** — XAUUSD prices with 3 decimal places will frequently exhibit floating-point drift. |
 | **Impact** | **MEDIUM** — BOS origin flags will be missed, zone overlaps will be undetected, clustering will produce inconsistent boundaries. |
-| **Historical Precedent** | The design audit ([SNR_DESIGN_AUDIT.md §2.3](docs/audits/SNR_DESIGN_AUDIT.md)) identified that BOS origin resolution requires matching `swing.price` to `bos.brokenLevel`, but the structs store prices independently with no tolerance. |
+| **Historical Precedent** | The design audit ([SNR_DESIGN_AUDIT.md §2.3](../audits/SNR_DESIGN_AUDIT.md)) identified that BOS origin resolution requires matching `swing.price` to `bos.brokenLevel`, but the structs store prices independently with no tolerance. |
 | **Detection Method** | Log BOS origin matching attempts with exact price values: `"Swing=2641.993000, BOS=2641.993000, diff=0.000000, match=true/false"`. |
 | **Mitigation Strategy** | Use tolerance-based comparison everywhere: `MathAbs(priceA - priceB) <= 0.01` for XAUUSD (1 cent precision). Never use `==` for `double` comparisons. Define a constant: `const double PRICE_TOLERANCE = 0.01;`. |
 | **Severity** | **HIGH** |
@@ -104,13 +104,13 @@ Every risk is traced back to a historical failure, a design audit finding, or a 
 
 | Field | Detail |
 |-------|--------|
-| **Description** | `CStructureEngine::GetATRValue()` is declared `private` at [StructureEngine.mqh L296](src/engines/StructureEngine.mqh). Any attempt to call it from `CSnrEngine` will cause a compiler error: `cannot access private member function`. |
-| **Root Cause** | The original SNR design ([SNR_ENGINE_DESIGN.md §2.2](docs/archive/SNR_ENGINE_DESIGN.md)) assumed the method was public. The design audit discovered it was private. |
+| **Description** | `CStructureEngine::GetATRValue()` is declared `private` at [StructureEngine.mqh L296](../../src/engines/StructureEngine.mqh). Any attempt to call it from `CSnrEngine` will cause a compiler error: `cannot access private member function`. |
+| **Root Cause** | The original SNR design ([SNR_ENGINE_DESIGN.md §2.2](../archive/SNR_ENGINE_DESIGN.md)) assumed the method was public. The design audit discovered it was private. |
 | **Probability** | **HIGH** — will occur if the developer copies patterns from the design document without checking the amendment. |
 | **Impact** | **CRITICAL** — compilation failure. Zero output. |
-| **Historical Precedent** | [SNR_DESIGN_AUDIT.md §2.1](docs/audits/SNR_DESIGN_AUDIT.md): "Attempting to call this method inside `CSnrEngine` will cause a compiler error." Resolution: local ATR calculation was mandated. |
+| **Historical Precedent** | [SNR_DESIGN_AUDIT.md §2.1](../audits/SNR_DESIGN_AUDIT.md): "Attempting to call this method inside `CSnrEngine` will cause a compiler error." Resolution: local ATR calculation was mandated. |
 | **Detection Method** | Compilation will fail immediately. Additionally, grep for `m_structureEngine.GetATRValue` or `m_structureEngine->GetATRValue` in the codebase. If found, it is a violation. |
-| **Mitigation Strategy** | Implement `CSnrEngine::CalculateLocalATR(int barIndex, int period=14)` using cached price arrays, mirroring the exact True Range formula from [StructureEngine.mqh L444-474](src/engines/StructureEngine.mqh) and [SupplyDemandEngine.mqh L445-476](src/engines/SupplyDemandEngine.mqh). |
+| **Mitigation Strategy** | Implement `CSnrEngine::CalculateLocalATR(int barIndex, int period=14)` using cached price arrays, mirroring the exact True Range formula from [StructureEngine.mqh L444-474](../../src/engines/StructureEngine.mqh) and [SupplyDemandEngine.mqh L445-476](../../src/engines/SupplyDemandEngine.mqh). |
 | **Severity** | **CRITICAL** |
 
 ---
@@ -123,9 +123,9 @@ Every risk is traced back to a historical failure, a design audit finding, or a 
 | **Root Cause** | Working around frozen engine limitations is harder than modifying the source directly. The design audit identified three workarounds required by the freeze policy. |
 | **Probability** | **MEDIUM** — temptation increases when workarounds become complex. |
 | **Impact** | **CRITICAL** — any modification to a frozen engine invalidates its 4-year backtest validation. The entire statistical foundation of the project is destroyed. Revalidation requires a full 4-year rerun and re-audit. |
-| **Historical Precedent** | [AGENT_CONSTITUTION.md §4.1](AGENT_CONSTITUTION.md): "A frozen module may NOT be modified under any normal development sprint." [LESSONS_LEARNED.md §4, Frozen Engine Principle](LESSONS_LEARNED.md): "Every 'small fix' to a validated engine risks introducing a regression that invalidates thousands of hours of testing." |
+| **Historical Precedent** | [AGENT_CONSTITUTION.md §4.1](../../AGENT_CONSTITUTION.md): "A frozen module may NOT be modified under any normal development sprint." [LESSONS_LEARNED.md §4, Frozen Engine Principle](../../docs/core/LESSONS_LEARNED.md): "Every 'small fix' to a validated engine risks introducing a regression that invalidates thousands of hours of testing." |
 | **Detection Method** | Run `git diff src/engines/StructureEngine.mqh src/engines/SupplyDemandEngine.mqh` before every commit. Any non-zero diff is a violation. |
-| **Mitigation Strategy** | 1. All workarounds (local ATR, rejection distance re-scan, BOS origin resolution) are pre-planned in [SNR_ARCHITECTURE_FREEZE.md](docs/design/SNR_ARCHITECTURE_FREEZE.md). 2. No workaround requires upstream modification. 3. If a genuine compiler block is discovered, escalate to project owner — do not modify frozen code. |
+| **Mitigation Strategy** | 1. All workarounds (local ATR, rejection distance re-scan, BOS origin resolution) are pre-planned in [SNR_ARCHITECTURE_FREEZE.md](../design/SNR_ARCHITECTURE_FREEZE.md). 2. No workaround requires upstream modification. 3. If a genuine compiler block is discovered, escalate to project owner — do not modify frozen code. |
 | **Severity** | **CRITICAL** |
 
 ---
@@ -138,7 +138,7 @@ Every risk is traced back to a historical failure, a design audit finding, or a 
 | **Root Cause** | MQL5 passes objects by reference. If `CSnrEngine` calls `GetZone()` and then modifies the returned struct, the modification is local (struct copy). But if the developer accesses internal arrays directly (e.g., via pointer arithmetic), upstream data could be corrupted. |
 | **Probability** | **LOW** — upstream APIs return copies, not references. |
 | **Impact** | **CRITICAL** — corrupted upstream data would invalidate all downstream analysis for the remainder of the backtest. Structure and S/D results would become unreliable. |
-| **Historical Precedent** | [LESSONS_LEARNED.md §4, Read-Only Dependency Principle](LESSONS_LEARNED.md): "Downstream engines are consumers, not producers. They read from upstream and write to their own output arrays." |
+| **Historical Precedent** | [LESSONS_LEARNED.md §4, Read-Only Dependency Principle](../../docs/core/LESSONS_LEARNED.md): "Downstream engines are consumers, not producers. They read from upstream and write to their own output arrays." |
 | **Detection Method** | Code review: grep for any assignment to `m_structureEngine->` or `m_sdEngine->` fields. Only `Get*()` calls are permitted. |
 | **Mitigation Strategy** | 1. All upstream data is accessed exclusively through `Get*()` methods that return copies. 2. `CSnrEngine` never stores pointers to upstream array elements. 3. All output is written to `m_snrLevels[]` and `m_liquidityPools[]` — arrays owned by `CSnrEngine`. |
 | **Severity** | **HIGH** |
@@ -157,7 +157,7 @@ Every risk is traced back to a historical failure, a design audit finding, or a 
 | **Root Cause** | Each engine is architecturally decoupled and owns its own price cache. There is no shared scanning infrastructure. The frozen status of upstream engines prevents optimization at the pipeline level. |
 | **Probability** | **HIGH** — the 4-year backtest is long; Strategy Tester has finite patience. |
 | **Impact** | **HIGH** — backtest may not complete within reasonable time, blocking validation. Strategy Tester optimization runs (which execute hundreds of parameter combinations) would be infeasible. |
-| **Historical Precedent** | [PROJECT_GENESIS.md §7.1](PROJECT_GENESIS.md): "Redundant Price History Scanning" identified as the #1 open risk. [SNR_DESIGN_AUDIT.md §5.1](docs/audits/SNR_DESIGN_AUDIT.md): "Running multiple independent historical scanning loops inside OnTick will significantly slow down multi-year portfolio backtests." |
+| **Historical Precedent** | [PROJECT_GENESIS.md §7.1](../../PROJECT_GENESIS.md): "Redundant Price History Scanning" identified as the #1 open risk. [SNR_DESIGN_AUDIT.md §5.1](../audits/SNR_DESIGN_AUDIT.md): "Running multiple independent historical scanning loops inside OnTick will significantly slow down multi-year portfolio backtests." |
 | **Detection Method** | Time the `Analyze()` call duration and log it: `"[CSnrEngine] Analyze() completed in X ms"`. If average exceeds 50ms per H4 bar, flag as performance concern. |
 | **Mitigation Strategy** | 1. **Gate execution**: Run `Analyze()` only on new H4 bar close (not every tick). 2. **Cap rejection scan**: Limit rejection distance scan to ±20 bars from each touch point, not entire history. 3. **Delta scanning**: After the first full analysis, subsequent calls process only the delta (new bar) rather than re-scanning all history. 4. **Cache results**: Store computed rejection distances per level ID; only recompute when a new touch occurs. |
 | **Severity** | **CRITICAL** |
@@ -191,9 +191,9 @@ Every risk is traced back to a historical failure, a design audit finding, or a 
 | **Root Cause** | `SupplyDemandEngine v1.1` was designed before the SNR scoring model was finalized. The scoring model requires data that the upstream struct does not provide. |
 | **Probability** | **CERTAIN** — the data gap is confirmed in the design audit. |
 | **Impact** | **HIGH** — without touch coordinates, rejection distance cannot be computed from metadata alone. A workaround (historical re-scan) is required, introducing performance cost and code complexity. |
-| **Historical Precedent** | [SNR_DESIGN_AUDIT.md §2.2](docs/audits/SNR_DESIGN_AUDIT.md): "CSnrEngine cannot compute the rejection distance of past touches using the zone metadata alone." |
+| **Historical Precedent** | [SNR_DESIGN_AUDIT.md §2.2](../audits/SNR_DESIGN_AUDIT.md): "CSnrEngine cannot compute the rejection distance of past touches using the zone metadata alone." |
 | **Detection Method** | Not applicable — this is a known, pre-audited constraint. |
-| **Mitigation Strategy** | `CSnrEngine` re-scans historical bars between `zone.impulseBarIndex` and the current bar to independently identify touch events and compute rejection distances. The scan uses the same `insideZone` state tracking pattern from [StructureEngine.mqh L701-721](src/engines/StructureEngine.mqh) to avoid counting consolidation as multiple touches. |
+| **Mitigation Strategy** | `CSnrEngine` re-scans historical bars between `zone.impulseBarIndex` and the current bar to independently identify touch events and compute rejection distances. The scan uses the same `insideZone` state tracking pattern from [StructureEngine.mqh L701-721](../../src/engines/StructureEngine.mqh) to avoid counting consolidation as multiple touches. |
 | **Severity** | **HIGH** |
 
 ---
@@ -206,7 +206,7 @@ Every risk is traced back to a historical failure, a design audit finding, or a 
 | **Root Cause** | `StructureEngine v2.2` was designed before BOS origin scoring was conceptualized. The BOS event records the break, not the broken swing's identity. |
 | **Probability** | **CERTAIN** — the data gap is confirmed in the design audit. |
 | **Impact** | **MEDIUM** — without the origin swing reference, `hasBOSOrigin` flags may have false negatives (missed matches). The workaround (price-matching with tolerance) may produce false positives in extreme edge cases. |
-| **Historical Precedent** | [SNR_DESIGN_AUDIT.md §2.3](docs/audits/SNR_DESIGN_AUDIT.md): "CSnrEngine must query the major swing arrays to find the invalidated swing whose price matches `brokenLevel`." |
+| **Historical Precedent** | [SNR_DESIGN_AUDIT.md §2.3](../audits/SNR_DESIGN_AUDIT.md): "CSnrEngine must query the major swing arrays to find the invalidated swing whose price matches `brokenLevel`." |
 | **Detection Method** | Log every BOS origin resolution attempt: `"BOS at bar X, brokenLevel=Y, matched swing at bar Z (diff=D)"`. Review logs for ambiguous multi-matches. |
 | **Mitigation Strategy** | 1. Iterate through major swing arrays. 2. Match `swing.price` to `bos.brokenLevel` within `PRICE_TOLERANCE = 0.01`. 3. Verify `swing.isInvalidated == true` and `swing.breakBarIndex` matches the BOS event index. 4. If multiple swings match (rare), use the one with the closest `breakBarIndex`. |
 | **Severity** | **MEDIUM** |
@@ -221,7 +221,7 @@ Every risk is traced back to a historical failure, a design audit finding, or a 
 | **Root Cause** | The optimal lookback window was not empirically validated. The value `150` was chosen based on the average zone lifetime (~124.73 H4 bars) plus a safety buffer. |
 | **Probability** | **MEDIUM** — the value is reasonable but may not be optimal for all market conditions. |
 | **Impact** | **LOW** — wrong lookback affects scoring accuracy but not system correctness. Under-inclusion produces lower S_SD scores; over-inclusion produces cluttered levels. |
-| **Historical Precedent** | [SNR_DESIGN_AUDIT.md §3.1](docs/audits/SNR_DESIGN_AUDIT.md): "The clustering step must be modified to extract both active zones and recently invalidated zones (within the lookback window)." |
+| **Historical Precedent** | [SNR_DESIGN_AUDIT.md §3.1](../audits/SNR_DESIGN_AUDIT.md): "The clustering step must be modified to extract both active zones and recently invalidated zones (within the lookback window)." |
 | **Detection Method** | Log the count of invalidated zones included vs. excluded per analysis cycle. Compare score distributions with 100, 150, and 200 bar lookbacks. |
 | **Mitigation Strategy** | Make `InpInvalidatedLookback` a configurable input parameter (default: 150). This allows optimization during Strategy Tester parameter sweeps without code changes. |
 | **Severity** | **LOW** |
@@ -274,7 +274,7 @@ These risks are direct re-occurrence vectors of bugs discovered in Sprints 1.0�
 | **Impact** | **MEDIUM** — rejection scores are systematically biased. Fresh, strongly rejected levels have low scores because their single strong bounce is averaged with dozens of consolidation micro-bounces. |
 | **Historical Precedent** | Bug 4 (LESSONS_LEARNED §3, Bug 4): "Swing points in sideways consolidation ranges accumulated absurdly high reaction counts (25 reactions) because every consecutive bar touching the price level was counted as an independent reaction event." Fix: `insideZone` state tracker. |
 | **Detection Method** | Log rejection distance calculations: touch count, individual distances, and average. If any level shows >10 touches with average distance <0.1 ATR, consolidation grouping is not working. |
-| **Mitigation Strategy** | Implement the identical `insideZone` boolean state tracker from [StructureEngine.mqh L701-721](src/engines/StructureEngine.mqh): count only zone re-entries, not consecutive touches. |
+| **Mitigation Strategy** | Implement the identical `insideZone` boolean state tracker from [StructureEngine.mqh L701-721](../../src/engines/StructureEngine.mqh): count only zone re-entries, not consecutive touches. |
 | **Severity** | **HIGH** |
 
 ---
@@ -321,7 +321,7 @@ These risks are direct re-occurrence vectors of bugs discovered in Sprints 1.0�
 | **Root Cause** | The worked examples assume specific market conditions (zone creation times, reaction counts, ATR values) that may not exactly reproduce during a 4-year backtest. Additionally, the rejection distance formula in Example 3 uses a denominator of 2.0 ATR (not 1.0), which may be a typographical error. |
 | **Probability** | **MEDIUM** — minor floating-point differences are expected; large deviations indicate bugs. |
 | **Impact** | **MEDIUM** — if scores deviate by >5 points, the scoring formula implementation must be audited. |
-| **Historical Precedent** | [LESSONS_LEARNED.md §4, Evidence Over Theory Principle](LESSONS_LEARNED.md): "Analytical projections are hypotheses. Parser output from raw data is evidence." The 33.52% vs. 2.27% false positive discrepancy showed that projected calculations can be wildly wrong. |
+| **Historical Precedent** | [LESSONS_LEARNED.md §4, Evidence Over Theory Principle](../../docs/core/LESSONS_LEARNED.md): "Analytical projections are hypotheses. Parser output from raw data is evidence." The 33.52% vs. 2.27% false positive discrepancy showed that projected calculations can be wildly wrong. |
 | **Detection Method** | Identify the exact zones from worked examples in the backtest log. Compare computed scores against expected values. Allow ±2 point tolerance for rounding. |
 | **Mitigation Strategy** | 1. Log full scoring breakdown per level: `S_Struct=X, S_SD=Y, S_Fresh=Z, S_Reject=W, S_Confl=V, Total=T`. 2. If deviation exceeds ±2 points, investigate each component score individually. 3. If the spec formula is ambiguous (Example 3 denominator), document the interpretation chosen. |
 | **Severity** | **MEDIUM** |
@@ -336,7 +336,7 @@ These risks are direct re-occurrence vectors of bugs discovered in Sprints 1.0�
 | **Root Cause** | Performance risks (P-01, P-02) combined with unguarded edge cases (T-01, T-02) can cascade into a non-completing backtest. |
 | **Probability** | **MEDIUM** — dependent on implementation quality. |
 | **Impact** | **CRITICAL** — no backtest = no validation = no freeze. Sprint 3.0 cannot be completed. |
-| **Historical Precedent** | [PROJECT_GENESIS.md §4.5](PROJECT_GENESIS.md): "Strategy Tester suffered severe lag or sync crashes during volatility calls." The ATR sync error caused functional failures during backtesting. |
+| **Historical Precedent** | [PROJECT_GENESIS.md §4.5](../../PROJECT_GENESIS.md): "Strategy Tester suffered severe lag or sync crashes during volatility calls." The ATR sync error caused functional failures during backtesting. |
 | **Detection Method** | Run a short backtest first (2024.01.01 to 2025.12.31 — 2 years) to validate stability before the full 4-year run. Monitor for `ExpertRemove()` calls or Strategy Tester error messages. |
 | **Mitigation Strategy** | 1. Test with 2-year backtest first. 2. Add try/catch-equivalent guards (MQL5: check return values, not exceptions) around all critical paths. 3. Log `Analyze()` execution time. 4. If timeout risk is high, reduce `InpInvalidatedLookback` from 150 to 100. |
 | **Severity** | **CRITICAL** |
@@ -351,7 +351,7 @@ These risks are direct re-occurrence vectors of bugs discovered in Sprints 1.0�
 | **Root Cause** | Each engine introduces its own log format. The parser must be updated to recognize `[CSnrEngine]` prefixed messages and the new field formats. |
 | **Probability** | **MEDIUM** — parser updates are routine but error-prone. |
 | **Impact** | **HIGH** — an incorrect statistical report could lead to freezing a buggy engine or rejecting a correct one. |
-| **Historical Precedent** | [LESSONS_LEARNED.md §2, Lesson 2](LESSONS_LEARNED.md): "The initial SupplyDemand report projected a 33.52% false positive rate. The actual verified rate was 2.27%." The projection error was caused by analytical methodology, not parser bugs, but the lesson applies: parser accuracy is critical. |
+| **Historical Precedent** | [LESSONS_LEARNED.md §2, Lesson 2](../../docs/core/LESSONS_LEARNED.md): "The initial SupplyDemand report projected a 33.52% false positive rate. The actual verified rate was 2.27%." The projection error was caused by analytical methodology, not parser bugs, but the lesson applies: parser accuracy is critical. |
 | **Detection Method** | Manually verify 5-10 log entries against parser output. Cross-check totals (e.g., parser reports 150 levels vs. manual count from log file). |
 | **Mitigation Strategy** | 1. Use consistent log format: `[CSnrEngine] LEVEL | id=X score=Y.Y struct=Z sd=W fresh=V reject=U confl=T`. 2. Write the parser before the backtest. 3. Test the parser against synthetic log samples. |
 | **Severity** | **HIGH** |
@@ -370,7 +370,7 @@ These risks are direct re-occurrence vectors of bugs discovered in Sprints 1.0�
 | **Root Cause** | The Git commit hash is the only mechanism ensuring source integrity. If the developer opens StructureEngine.mqh to "inspect" it and accidentally saves a change, the freeze is broken. |
 | **Probability** | **LOW** — but the impact is catastrophic. |
 | **Impact** | **CRITICAL** — all upstream statistical baselines (97.73% retest reliability, 246 zones, etc.) are invalidated. Sprint 3.0 validation numbers become meaningless. |
-| **Historical Precedent** | [AGENT_CONSTITUTION.md §4](AGENT_CONSTITUTION.md): Frozen components require formal hotfix audit with 4-year revalidation to modify. |
+| **Historical Precedent** | [AGENT_CONSTITUTION.md §4](../../AGENT_CONSTITUTION.md): Frozen components require formal hotfix audit with 4-year revalidation to modify. |
 | **Detection Method** | Before starting Sprint 3.0 coding, record SHA-256 hashes of both frozen engine files. Before every commit, verify hashes match: `Get-FileHash src\engines\StructureEngine.mqh`. |
 | **Mitigation Strategy** | 1. Record file hashes in the Sprint 3.0 commit message. 2. Make upstream files read-only: `attrib +R src\engines\StructureEngine.mqh`. 3. Run `git diff src/engines/StructureEngine.mqh src/engines/SupplyDemandEngine.mqh` before every commit. |
 | **Severity** | **CRITICAL** |
@@ -402,7 +402,7 @@ These risks are direct re-occurrence vectors of bugs discovered in Sprints 1.0�
 | **Impact** | **MEDIUM** — scores exceed 100 (false high confidence) or fall below theoretical minimum (missed levels). Comparison across runs with different weight sums is meaningless. |
 | **Historical Precedent** | StructureEngine uses `InpScoreWeightDisplace + InpScoreWeightReaction + InpScoreWeightAge = 100` (sum to 100, then divide by total). This normalizes regardless of input values. |
 | **Detection Method** | Assert at `Init()`: `if(MathAbs(totalWeight - 1.0) > 0.001) LogMessage("WARNING: Scoring weights do not sum to 1.00")`. |
-| **Mitigation Strategy** | Normalize weights at runtime: `double totalW = W_Struct + W_SD + W_Fresh + W_Reject + W_Confl;` then divide each component by `totalW`. This guarantees scores in [0, 100] regardless of input values. Follow the pattern from [StructureEngine.mqh L728-729](src/engines/StructureEngine.mqh). |
+| **Mitigation Strategy** | Normalize weights at runtime: `double totalW = W_Struct + W_SD + W_Fresh + W_Reject + W_Confl;` then divide each component by `totalW`. This guarantees scores in [0, 100] regardless of input values. Follow the pattern from [StructureEngine.mqh L728-729](../../src/engines/StructureEngine.mqh). |
 | **Severity** | **MEDIUM** |
 
 ---

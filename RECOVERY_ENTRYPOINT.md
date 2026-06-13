@@ -79,21 +79,24 @@ Recovery is considered successful **only** if the agent can explain:
 ROOT/
 ├── PROJECT_GENESIS.md              ← Project history & single source of truth
 ├── AGENT_CONSTITUTION.md           ← Permanent operating law
-├── MILESTONE_GENESIS_FREEZE.md     ← Current state snapshot
+├── CURRENT_PROJECT_STATE.md        ← Authoritative project status entrypoint
+├── MILESTONE_GENESIS_FREEZE.md     ← Genesis milestone state snapshot
+├── MILESTONE_SPRINT_3_FREEZE.md    ← Sprint 3 milestone state snapshot
 ├── PROJECT_RECOVERY_PROTOCOL.md    ← Onboarding procedure
 ├── SYSTEM_ROADMAP.md               ← Development roadmap
-├── README.md                       ← This file (entry point)
+├── README.md                       ← Main GitHub landing page
+├── RECOVERY_ENTRYPOINT.md          ← AI Agent Recovery entry point
 │
 ├── docs/
-│   ├── core/                       ← Core documentation
-│   ├── design/                     ← Design documents
+│   ├── core/                       ← Core documentation (Lessons Learned, Risk Register)
+│   ├── design/                     ← Design specs (SNR specification, Visual specification)
 │   ├── audits/                     ← Audit reports
-│   ├── reports/                    ← Analysis reports
-│   └── archive/                    ← Historical/superseded docs
+│   ├── reports/                    ← Analysis and Validation reports (RECOVERY_REPORT.md)
+│   └── archive/                    ← Historical/superseded docs (ARTICLE.md, note_for_user.md)
 │
 └── src/
-    ├── engines/                    ← Trading engine source code
-    └── tests/                      ← Test scripts
+    ├── engines/                    ← Trading engine source code (Structure, SupplyDemand, SNR)
+    └── tests/                      ← Test scripts (TestStructure, TestSupplyDemand, TestSnr)
 ```
 
 ---
@@ -104,6 +107,9 @@ ROOT/
 |----------|---------|----------|
 | [PROJECT_GENESIS.md](PROJECT_GENESIS.md) | Complete project history | Root |
 | [AGENT_CONSTITUTION.md](AGENT_CONSTITUTION.md) | Operating rules & constraints | Root |
-| [MILESTONE_GENESIS_FREEZE.md](MILESTONE_GENESIS_FREEZE.md) | Current state snapshot | Root |
+| [CURRENT_PROJECT_STATE.md](CURRENT_PROJECT_STATE.md) | Current project status & phase | Root |
+| [MILESTONE_GENESIS_FREEZE.md](MILESTONE_GENESIS_FREEZE.md) | Genesis baseline snapshot | Root |
+| [MILESTONE_SPRINT_3_FREEZE.md](MILESTONE_SPRINT_3_FREEZE.md) | Sprint 3 baseline snapshot | Root |
 | [PROJECT_RECOVERY_PROTOCOL.md](PROJECT_RECOVERY_PROTOCOL.md) | Onboarding steps | Root |
 | [SYSTEM_ROADMAP.md](SYSTEM_ROADMAP.md) | Development plan | Root |
+| [RECOVERY_REPORT.md](docs/reports/RECOVERY_REPORT.md) | Recovery verification report | `docs/reports/` |

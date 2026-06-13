@@ -4,14 +4,14 @@
 **Date**: June 12, 2026  
 **Status**: FINAL PLANNING GATE — AWAITING OWNER APPROVAL  
 **Target Deliverables**: `src/engines/SnrEngine.mqh` + `src/tests/TestSnr.mq5`  
-**Specification**: [SNR_ARCHITECTURE_FREEZE.md](docs/design/SNR_ARCHITECTURE_FREEZE.md)  
-**Design Audit**: [SNR_DESIGN_AUDIT.md](docs/audits/SNR_DESIGN_AUDIT.md)
+**Specification**: [SNR_ARCHITECTURE_FREEZE.md](../design/SNR_ARCHITECTURE_FREEZE.md)  
+**Design Audit**: [SNR_DESIGN_AUDIT.md](../audits/SNR_DESIGN_AUDIT.md)
 
 ---
 
 ## 1. Exact Implementation Sequence
 
-Sprint 3.0 follows the mandatory workflow from [AGENT_CONSTITUTION.md §6](AGENT_CONSTITUTION.md):
+Sprint 3.0 follows the mandatory workflow from [AGENT_CONSTITUTION.md §6](../../AGENT_CONSTITUTION.md):
 
 ```
 Design Freeze ✅ → Consistency Audit ✅ → Owner Approval ⏳ → Implementation → 

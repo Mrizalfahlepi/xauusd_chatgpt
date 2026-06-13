@@ -11,11 +11,11 @@
 
 ## 1. Validation Success Criteria Evaluation
 
-The SNR Engine v1.0 has been evaluated against the 8 mandatory success criteria defined in [SPRINT_3_EXECUTION_PLAN.md §7.3](file:///c:/xauusd_chatgpt/SPRINT_3_EXECUTION_PLAN.md#L488-L501):
+The SNR Engine v1.0 has been evaluated against the 8 mandatory success criteria defined in [SPRINT_3_EXECUTION_PLAN.md §7.3](file:///c:/xauusd_chatgpt/docs/archive/SPRINT_3_EXECUTION_PLAN.md#L488-L501):
 
 ### 1.1 Compile Check (0 Errors, 0 Warnings)
 * **Result**: 🟢 **PASSED**
-* **Evidence**: Verified in [SNR_COMPILE_AUDIT.md](file:///c:/xauusd_chatgpt/SNR_COMPILE_AUDIT.md) and [TESTSNR_COMPILE_AUDIT.md](file:///c:/xauusd_chatgpt/TESTSNR_COMPILE_AUDIT.md). The entire three-engine chain (`StructureEngine.mqh` $\rightarrow$ `SupplyDemandEngine.mqh` $\rightarrow$ `SnrEngine.mqh`) compiles cleanly in MetaEditor with no warnings.
+* **Evidence**: Verified in [SNR_COMPILE_AUDIT.md](file:///c:/xauusd_chatgpt/docs/audits/SNR_COMPILE_AUDIT.md) and [TESTSNR_COMPILE_AUDIT.md](file:///c:/xauusd_chatgpt/docs/audits/TESTSNR_COMPILE_AUDIT.md). The entire three-engine chain (`StructureEngine.mqh` $\rightarrow$ `SupplyDemandEngine.mqh` $\rightarrow$ `SnrEngine.mqh`) compiles cleanly in MetaEditor with no warnings.
 
 ### 1.2 No-Repainting Verification
 * **Result**: 🟢 **PASSED**
@@ -67,7 +67,7 @@ The MT5 strategy tester run completed with the following performance metrics:
 
 ## 4. Risk Register Sync & Mitigation
 
-The implementational risks outlined in [SPRINT_3_EXECUTION_PLAN.md §8.1](file:///c:/xauusd_chatgpt/SPRINT_3_EXECUTION_PLAN.md#L505-L518) have been successfully mitigated:
+The implementational risks outlined in [SPRINT_3_EXECUTION_PLAN.md §8.1](file:///c:/xauusd_chatgpt/docs/archive/SPRINT_3_EXECUTION_PLAN.md#L505-L518) have been successfully mitigated:
 
 | # | Risk | Severity | Mitigation Method | Status |
 |:---|:---|:---:|:---|:---:|

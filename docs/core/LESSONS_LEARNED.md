@@ -54,7 +54,7 @@ When the project outgrew a single chat conversation, the team discovered that un
 **Engine**: StructureEngine  
 **Version Affected**: v2.1  
 **Discovered During**: Strategy Tester backtest validation  
-**Audit Reference**: [STRUCTURE_ENGINE_V22_AUDIT.md](docs/audits/STRUCTURE_ENGINE_V22_AUDIT.md)
+**Audit Reference**: [STRUCTURE_ENGINE_V22_AUDIT.md](../audits/STRUCTURE_ENGINE_V22_AUDIT.md)
 
 #### Problem
 
@@ -92,7 +92,7 @@ At `2025.01.14`, a Lower Low (LL=1) broke the consecutive bullish pattern, immed
 **Engine**: StructureEngine  
 **Version Affected**: v2.1  
 **Discovered During**: Live tick simulation in Strategy Tester  
-**Audit Reference**: [STRUCTURE_ENGINE_V22_AUDIT.md](docs/audits/STRUCTURE_ENGINE_V22_AUDIT.md)
+**Audit Reference**: [STRUCTURE_ENGINE_V22_AUDIT.md](../audits/STRUCTURE_ENGINE_V22_AUDIT.md)
 
 #### Problem
 
@@ -129,7 +129,7 @@ No BOS events were registered at `barIdx = 0` in the full backtest. All BOS even
 **Engine**: StructureEngine  
 **Version Affected**: v2.1  
 **Discovered During**: Statistical analysis of swing strength scores  
-**Audit Reference**: [STRUCTURE_ENGINE_V22_AUDIT.md](docs/audits/STRUCTURE_ENGINE_V22_AUDIT.md)
+**Audit Reference**: [STRUCTURE_ENGINE_V22_AUDIT.md](../audits/STRUCTURE_ENGINE_V22_AUDIT.md)
 
 #### Problem
 
@@ -173,7 +173,7 @@ Major Swing High at `2024.12.19 08:00` (Price = 2626.430):
 **Engine**: StructureEngine  
 **Version Affected**: v2.1  
 **Discovered During**: Anomalous reaction counts (25+) in backtest logs  
-**Audit Reference**: [STRUCTURE_ENGINE_V22_AUDIT.md](docs/audits/STRUCTURE_ENGINE_V22_AUDIT.md)
+**Audit Reference**: [STRUCTURE_ENGINE_V22_AUDIT.md](../audits/STRUCTURE_ENGINE_V22_AUDIT.md)
 
 #### Problem
 
@@ -221,7 +221,7 @@ Swing Highs at `2024.11.26 12:00` (Price = 2641.993):
 **Engine**: StructureEngine  
 **Version Affected**: v2.1  
 **Discovered During**: Strategy Tester runs returning only 2 major swings instead of 47  
-**Audit Reference**: [STRUCTURE_ENGINE_V22_AUDIT.md](docs/audits/STRUCTURE_ENGINE_V22_AUDIT.md)
+**Audit Reference**: [STRUCTURE_ENGINE_V22_AUDIT.md](../audits/STRUCTURE_ENGINE_V22_AUDIT.md)
 
 #### Problem
 
@@ -259,7 +259,7 @@ No `Failed to read ATR` warnings. All major swings correctly classified. This be
 **Engine**: SupplyDemandEngine  
 **Version Affected**: v1.0  
 **Discovered During**: 4-year backtest statistical analysis  
-**Audit Reference**: [SUPPLY_DEMAND_V11_AUDIT.md](docs/audits/SUPPLY_DEMAND_V11_AUDIT.md)
+**Audit Reference**: [SUPPLY_DEMAND_V11_AUDIT.md](../audits/SUPPLY_DEMAND_V11_AUDIT.md)
 
 #### Problem
 
@@ -296,7 +296,7 @@ The average zone score dropped from 76.90 to 75.01. The score distribution shift
 **Engine**: SupplyDemandEngine  
 **Version Affected**: v1.0  
 **Discovered During**: 4-year backtest — zones with 0 reactions were showing 1 reaction  
-**Audit Reference**: [SUPPLY_DEMAND_V11_AUDIT.md](docs/audits/SUPPLY_DEMAND_V11_AUDIT.md)
+**Audit Reference**: [SUPPLY_DEMAND_V11_AUDIT.md](../audits/SUPPLY_DEMAND_V11_AUDIT.md)
 
 #### Problem
 
@@ -336,7 +336,7 @@ After the fix:
 
 **Engine**: SNR Engine (Design Phase)  
 **Discovered During**: Pre-implementation design consistency audit  
-**Audit Reference**: [SNR_DESIGN_AUDIT.md](docs/audits/SNR_DESIGN_AUDIT.md)
+**Audit Reference**: [SNR_DESIGN_AUDIT.md](../audits/SNR_DESIGN_AUDIT.md)
 
 #### Problem
 
@@ -348,7 +348,7 @@ The design documents were written without cross-referencing the naming conventio
 
 #### Fix
 
-Formally renamed the SNR component from `S_React` to `S_Reject` (Rejection Strength Score) in the frozen architecture specification [SNR_ARCHITECTURE_FREEZE.md](docs/design/SNR_ARCHITECTURE_FREEZE.md).
+Formally renamed the SNR component from `S_React` to `S_Reject` (Rejection Strength Score) in the frozen architecture specification [SNR_ARCHITECTURE_FREEZE.md](../design/SNR_ARCHITECTURE_FREEZE.md).
 
 #### Permanent Lesson
 
@@ -420,7 +420,7 @@ This policy exists because every "small fix" to a validated engine risks introdu
 
 **Why design audits happen before implementation.**
 
-The SNR Design Consistency Audit ([SNR_DESIGN_AUDIT.md](docs/audits/SNR_DESIGN_AUDIT.md)) discovered **two impossible data dependencies** and **three logical contradictions** in the design documents — before a single line of MQL5 was written:
+The SNR Design Consistency Audit ([SNR_DESIGN_AUDIT.md](../audits/SNR_DESIGN_AUDIT.md)) discovered **two impossible data dependencies** and **three logical contradictions** in the design documents — before a single line of MQL5 was written:
 
 1. **Private Access Violation**: The design assumed `CSnrEngine` could call `GetATRValue()` from `CStructureEngine`, but that method is `private` in the frozen code. This would have caused a compiler error.
 2. **Missing Reaction Coordinates**: The design assumed zone metadata included touch bar indices, but the `SupplyDemandZone` struct only stores a count. The SNR engine would have been unable to compute rejection distances.
@@ -436,7 +436,7 @@ All three issues were resolved in the design phase at zero cost. Had they been d
 
 **Why statistical reports override assumptions.**
 
-The first SupplyDemand statistical report projected a 33.52% false positive rate based on analytical reasoning. The consistency audit ([SUPPLY_DEMAND_CONSISTENCY_AUDIT.md](docs/audits/SUPPLY_DEMAND_CONSISTENCY_AUDIT.md)) proved the actual rate was 2.27%. The difference — 31.25 percentage points — was caused by an analytical projection error that assumed every zone with `MaxReacts = 1` was a false positive. In reality, 55 of those 59 zones had a legitimate touch on the bar immediately preceding invalidation.
+The first SupplyDemand statistical report projected a 33.52% false positive rate based on analytical reasoning. The consistency audit ([SUPPLY_DEMAND_CONSISTENCY_AUDIT.md](../audits/SUPPLY_DEMAND_CONSISTENCY_AUDIT.md)) proved the actual rate was 2.27%. The difference — 31.25 percentage points — was caused by an analytical projection error that assumed every zone with `MaxReacts = 1` was a false positive. In reality, 55 of those 59 zones had a legitimate touch on the bar immediately preceding invalidation.
 
 The lesson was clear: **analytical projections are hypotheses. Parser output from raw data is evidence.** When the two disagree, the evidence wins.
 

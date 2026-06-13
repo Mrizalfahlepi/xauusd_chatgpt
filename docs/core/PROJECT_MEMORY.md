@@ -1,6 +1,6 @@
 # PROJECT_MEMORY.md
 
-Version: 2.4
+Version: 2.5
 Last Updated: 2026-06-13
 
 =========================================================
@@ -17,6 +17,7 @@ Membangun EA MQL5 yang membaca market menggunakan:
 * MSS (Market Structure Shift)
 * Supply Demand
 * SNR Scoring & Prioritizer (SnrPriorityContract)
+* Liquidity Engine (LiquidityPriorityContract)
 
 Tujuan akhir:
 Mencari statistical edge yang dapat dibuktikan melalui backtest dan forward test. Bukan membuat EA berdasarkan indikator lagging.
@@ -45,6 +46,8 @@ Tidak menggunakan:
 * Averaging Down
 * Recovery System
 * Support Resistance berbasis swing semata (tanpa scoring)
+* Stop-loss ketat (< 1.0 ATR) pada trade pembalikan likuiditas
+* Fixed time-based exits tanpa target SL/TP pelindung
 
 =========================================================
 APPROVED CONCEPTS
@@ -72,6 +75,14 @@ Berbasis:
 * Nearest BSL/SSL targets mapping
 * Fallback bypass mechanisms
 
+Liquidity Engine & Reversal Filtering
+Berbasis:
+* Volatility-adjusted sweep size ATR
+* Breach vs. Rejection separation in contract
+* Asymmetric Risk-to-Reward models (SL = 1.0 ATR, TP = 2.0 ATR)
+* Time-decay exits (hard close at 12 M30 bars / 6 hours)
+* Downstream Entry Engine regime filters
+
 =========================================================
 CURRENT PROJECT STATUS
 ======================
@@ -84,17 +95,20 @@ Completed & Frozen:
 * [05_CURRENT_STATUS.md](file:///c:/xauusd_chatgpt/docs/core/05_CURRENT_STATUS.md)
 * [08_AGENT_ONBOARDING.md](file:///c:/xauusd_chatgpt/docs/core/08_AGENT_ONBOARDING.md)
 * [StructureEngine.mqh](file:///c:/xauusd_chatgpt/src/engines/StructureEngine.mqh) (Version 2.2) [FROZEN]
-* [TestStructure.mq5](file:///c:/xauusd_chatgpt/src/tests/TestStructure.mq5) (Version 2.2 Compiler Verified)
+* [TestStructure.mq5](file:///c:/xauusd_chatgpt/src/tests/TestStructure.mq5) (Compiler Verified)
 * [STRUCTURE_ENGINE_V22_AUDIT.md](file:///c:/xauusd_chatgpt/docs/audits/STRUCTURE_ENGINE_V22_AUDIT.md)
 * [SupplyDemandEngine.mqh](file:///c:/xauusd_chatgpt/src/engines/SupplyDemandEngine.mqh) (Version 1.1) [FROZEN]
-* [TestSupplyDemand.mq5](file:///c:/xauusd_chatgpt/src/tests/TestSupplyDemand.mq5) (Version 1.1 Compiler Verified)
+* [TestSupplyDemand.mq5](file:///c:/xauusd_chatgpt/src/tests/TestSupplyDemand.mq5) (Compiler Verified)
 * [SUPPLY_DEMAND_DESIGN.md](file:///c:/xauusd_chatgpt/docs/design/SUPPLY_DEMAND_DESIGN.md)
 * [SUPPLY_DEMAND_V11_AUDIT.md](file:///c:/xauusd_chatgpt/docs/audits/SUPPLY_DEMAND_V11_AUDIT.md)
 * [UPDATED_SUPPLY_DEMAND_STATISTICAL_REPORT.md](file:///c:/xauusd_chatgpt/docs/reports/UPDATED_SUPPLY_DEMAND_STATISTICAL_REPORT.md)
 * [SnrEngine.mqh](file:///c:/xauusd_chatgpt/src/engines/SnrEngine.mqh) (Version 1.0) [FROZEN]
 * [SnrPriorityEngine.mqh](file:///c:/xauusd_chatgpt/src/engines/SnrPriorityEngine.mqh) (Version 1.0) [FROZEN]
-* [TestSnr.mq5](file:///c:/xauusd_chatgpt/src/tests/TestSnr.mq5) (Version 1.0 Compiler Verified)
+* [TestSnr.mq5](file:///c:/xauusd_chatgpt/src/tests/TestSnr.mq5) (Compiler Verified)
 * [MILESTONE_SPRINT_3_FREEZE.md](file:///c:/xauusd_chatgpt/MILESTONE_SPRINT_3_FREEZE.md)
+* [LiquidityEngine.mqh](file:///c:/xauusd_chatgpt/src/engines/LiquidityEngine.mqh) (Version 1.0) [FROZEN]
+* [TestLiquidity.mq5](file:///c:/xauusd_chatgpt/src/tests/TestLiquidity.mq5) (Compiler Verified)
+* [TestLiquidityValidation.mq5](file:///c:/xauusd_chatgpt/src/tests/TestLiquidityValidation.mq5) (Compiler Verified)
 
 =========================================================
 CURRENT ENGINE STATUS
@@ -105,6 +119,7 @@ Version:
 * Supply & Demand Engine v1.1 (Production-Ready) [FROZEN]
 * SNR Engine v1.0 (Production-Ready) [FROZEN]
 * SNR Priority Engine v1.0 (Production-Ready) [FROZEN]
+* Liquidity Engine v1.0 (Production-Ready) [FROZEN]
 
 Features:
 * Fractal-based Swing Detection (N=3)
@@ -114,7 +129,7 @@ Features:
 * Chronological BOS & MSS Processing
 * Capped Swing Strength Score (Clipped at Break Bar Index)
 * Consolidation-grouped Reaction Count
-* Local Synchronous ATR(14) Calculator (Eliminated MT5 Tester sync issues)
+* Local Synchronous ATR(14) Calculator
 * Chronological Supply/Demand zone creation and invalidation tracking
 * 1-6 base candle consolidation expansion
 * 5-metric zone quality scoring framework with active age decay and non-inflated retest reaction counts
@@ -122,6 +137,8 @@ Features:
 * Proximity-based structural vs. tradable levels sorting and Quality Score + ATR distance filtering
 * Neutral conflict nodes detection and helper checks
 * Nearest BSL/SSL pools mapping
+* Volatility-adjusted sweep size calculation on closed M30 bar 1
+* Decoupled liquidity detection and downstream contract output
 
 =========================================================
 RESOLVED ISSUES
@@ -135,7 +152,10 @@ RESOLVED ISSUES
 * **Issue #6: SupplyDemand Age Score Decay Defect (Resolved in v1.1)**
 * **Issue #7: SupplyDemand Invalidation Bar Reaction Inflation (Resolved in v1.1)**
 * **Issue #8: ATR Distance Filter Fallback (Resolved in Sprint 3.4)**
-  * *Finding*: Kandidat `ID=18` berjarak `5.01223821` ATR correctly rejected di bawah limit `5.0` ATR. Kehadiran di contract murni karena dipicu oleh fallback mechanism untuk mencegah downstream engine "buta".
+* **Issue #9: Visual Marker Timing Latency (Resolved in Phase 4.3)**
+  * *Finding*: Marker baru tergambar beberapa lilin setelah event terdeteksi. Diperbaiki dengan menggambar marker visual secara instan pada candle pendeteksi breach, bukan saat event ditutup atau saat flush data.
+* **Issue #10: Strategy Tester Journal Spam (Resolved in Phase 4.3)**
+  * *Finding*: Log dari prioritas ATR filter dan invalidasi supply/demand membanjiri jurnal tester. Diperbaiki dengan menambahkan gate kompilasi `#ifdef` di file masing-masing.
 
 =========================================================
 DECISIONS ALREADY MADE
@@ -154,24 +174,32 @@ DECISIONS ALREADY MADE
 * **Decision #11**: Menghitung umur zona S/D sebagai selisih bar positif (`impulseBarIndex - currentBarIdx`) untuk mengaktifkan peluruhan skor linier.
 * **Decision #12**: Mengeluarkan lilin pematah (invalidation candle) dari rentang sentuhan retest S/D untuk menghindari inflasi reaksi.
 * **Decision #13**: Membekukan Sprint 3.4. Seluruh porsi SNR Engine dan Prioritizer telah beku dan lolos pengujian kompilasi & Strategy Tester.
+* **Decision #14**: Memisahkan terminologi Breach dan Rejection dalam kontrak likuiditas. Breach adalah penembusan batas luar pool; Rejection adalah kembalinya Close melewati batas dalam pool.
+* **Decision #15**: Melakukan pemeriksaan breach likuiditas pada batas luar pool (outer boundary) untuk BSL (`High > priceHigh`) dan SSL (`Low < priceLow`) guna menghindari sinyal palsu akibat penembusan parsial.
+* **Decision #16**: Marker visual digambar secara instan pada candle pendeteksi breach untuk memfasilitasi forensic validation yang akurat secara kronologis.
+* **Decision #17**: Mempertahankan logika Liquidity Engine murni bersifat faktual (hanya melaporkan kejadian). Filter trading seperti pembatasan ukuran breach didelegasikan sepenuhnya ke Entry/Risk Engine hilir.
+* **Decision #18**: Memotong pesan debug yang tidak penting menggunakan gate `#ifdef` untuk mencegah disk write bottleneck selama pengujian Strategy Tester.
+* **Decision #19**: Menolak model exit berbasis waktu murni tanpa stop/target pengaman. Menggunakan SL = 1.0 ATR (di atas median MAE 0.627 ATR) dan TP = 2.0 ATR untuk mengekstrak profit dari V-reversals yang ekstrem secara asimetris.
+* **Decision #20**: Mengakui ketidakstabilan temporal dari pembalikan likuiditas murni (merugi di 2023, untung besar di 2024). Mengharuskan Entry Engine hilir mengintegrasikan trend-filter guna menghindari entry saat tren H4 sangat kuat.
 
 =========================================================
 NEXT PRIORITY
 =============
 
-Build Liquidity Engine (Module 4)
-* Mengintegrasikan `SnrPriorityContract` ke dalam pipeline.
-* Mendeteksi stop-loss clusters (BSL/SSL) di atas/bawah swings.
-* Melacak sweep events (Stop Runs) dan menandai event likuiditas.
+Build Entry Engine (Module 5)
+* Mengintegrasikan `LiquidityPriorityContract` ke dalam pipeline.
+* Menerapkan filter margin penolakan ($\ge 0.50$ ATR).
+* Menerapkan H4 trend-gating filter untuk memblokir trade pembalikan yang melawan tren kuat.
+* Menguji kompilasi dan Strategy Tester pipeline.
 
 Do Not Do:
-* **Jangan mendesain ulang Sprint 3** (scoring logic, prioritizer, atau interface contract beku).
-* Jangan membangun Entry Engine sebelum Liquidity Engine selesai divalidasi penuh.
+* **Jangan memodifikasi model deteksi likuiditas beku** di `CLiquidityEngine`.
+* Jangan mendesain ulang scoring dan prioritizer level SNR.
 
 =========================================================
 SUCCESS CRITERIA
 ================
-* **Liquidity Engine**: Mampu melacak sweep events secara real-time dan mengekspos koordinat BSL/SSL secara presisi tanpa merusak backward compatibility kontrak `SnrPriorityContract`.
+* **Entry Engine**: Mampu menyaring sinyal likuiditas secara dinamis dan menghasilkan sinyal entry asimetris yang stabil secara temporal.
 
 =========================================================
 END OF MEMORY

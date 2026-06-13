@@ -1,7 +1,7 @@
 # SYSTEM ROADMAP
 
 **Author**: Market Structure & Architecture Team  
-**Date**: June 12, 2026  
+**Date**: June 13, 2026  
 **Status**: APPROVED BASELINE  
 **Workspace**: `c:\xauusd_chatgpt`
 
@@ -36,19 +36,19 @@
 
 ## Phase 4 — Liquidity Engine
 *   **Purpose**: Identifies stop-loss clusters (liquidity pools) residing above major swing highs and below major swing lows. Tracks sweep events when price runs these pools.
-*   **Inputs**: Major swings from `CStructureEngine`, H4 price data, and local ATR.
-*   **Outputs**: Array of `LiquidityPool` structures (strength, coordinates, swept status).
-*   **Dependencies**: `CStructureEngine` (Module 1), `CSnrPriorityEngine` (Module 3 - stable contract integration).
-*   **Status**: **ACTIVE PHASE**.
+*   **Inputs**: Major swings from `CStructureEngine`, H4 price data, local H4 ATR, and consolidated levels from `CSnrPriorityEngine`.
+*   **Outputs**: `LiquidityPriorityContract` containing real-time sweep events (`isBSLBreached`, `isBSLRejected`, `sweepSizeATR`), nearest pool coordinates, and trend breakout risk indicators.
+*   **Dependencies**: `CStructureEngine` (Module 1), `CSnrPriorityEngine` (Module 3).
+*   **Status**: **FROZEN & VALIDATED (Version 1.0)**.
 
 ---
 
 ## Phase 5 — Trade Entry Engine
-*   **Purpose**: Refines the H4 structural bias on the M30 execution timeframe. Validates entry setups (e.g. engulfing, pinbars) and places limit or market orders.
-*   **Inputs**: Consolidated `SNRLevel` array, H4 trend state, M30 price data, and current Bid/Ask.
+*   **Purpose**: Refines the H4 structural bias on the M30 execution timeframe. Validates entry setups (e.g., rejection margin thresholds $\ge 0.50$ ATR, H4 trend-gating) and places limit/market orders with fixed risk parameters (SL = 1.0 ATR, TP = 2.0 ATR, 12-bar exit).
+*   **Inputs**: `SnrPriorityContract`, `LiquidityPriorityContract`, H4 trend state, M30 price data, and current Bid/Ask.
 *   **Outputs**: Trade signal coordinates (entry price, stop-loss, take-profit, and trigger type).
 *   **Dependencies**: `CSnrEngine` (Module 3), `CLiquidityEngine` (Module 4).
-*   **Status**: **PLANNED**.
+*   **Status**: **ACTIVE TARGET** (Research parameters established, MQL5 implementation pending).
 
 ---
 

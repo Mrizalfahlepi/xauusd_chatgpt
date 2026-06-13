@@ -1,103 +1,81 @@
 # 05_CURRENT_STATUS.md
 
-Version: 1.0  
-Date: 2026-06-12  
+Version: 2.4  
+Date: 2026-06-13  
 Status: Active  
 
 ---
 
 ## 1. Project Phase
 
-### Current Phase: Sprint 1.5 - Project Knowledge Consolidation (Complete)
-*   **Focus**: Auditing the Structure Engine, resolving repainting and leakage bugs, verifying fixes with Strategy Tester logs, and consolidatng project documentation.
-*   **Deliverables**: `StructureEngine.mqh` v2.2, `STRUCTURE_ENGINE_V22_AUDIT.md`, `04_DESIGN_DECISIONS.md`, `05_CURRENT_STATUS.md`, and `08_AGENT_ONBOARDING.md`.
+### Current Phase: Phase 4 — Liquidity Engine (Active)
+*   **Focus**: Implementing the Liquidity Engine to detect buy-side (BSL) and sell-side (SSL) stop-loss pools, and monitor liquidity sweep (Stop Run) events on H4 and M30.
+*   **Entrance Criteria**: Complete integration, validation, and freezing of the Phase 3 SNR and Prioritization Engines (PASSED).
 
-### Next Phase: Sprint 2.0 - Supply & Demand Engine
-*   **Focus**: Implementing Module 2 (Supply & Demand Engine) to generate zones based on institutional candle base and impulse structures.
-*   **Entrance Criteria**: Validation of Structure Engine v2.2 complete (PASSED).
+### Next Phase: Phase 5 — Trade Entry Engine
+*   **Focus**: Building entry qualification filters, M30 setup validation (e.g. engulfing, pinbars), and signal generation.
+*   **Entrance Criteria**: Liquidity Engine validation complete.
 
 ---
 
 ## 2. Engine Metrics (Strategy Tester Verification)
 
-These metrics represent the verified output of the backtest conducted on **TestStructure.mq5** under the following backtest environment:
-*   **Symbol**: `XAUUSDm` (Gold)
-*   **Timeframe**: `M30` (EA ticks), `H4` (Primary Structure timeframe)
-*   **Period**: `2024.12.29` to `2025.01.15`
-*   **Lookback**: `300` H4 bars
-
-### Core Output Summary
-| Metric | Value | Status |
-| :--- | :--- | :--- |
-| **Total Swing Highs** | 31 (24 Major, 7 Minor) | Verified |
-| **Total Swing Lows** | 27 (23 Major, 4 Minor) | Verified |
-| **Invalidated Highs** | 11 | Verified |
-| **Invalidated Lows** | 9 | Verified |
-| **BOS Events** | 20 | Verified |
-| **MSS Events** | 10 | Verified |
-| **Trend States** | Correct transitions (consecutive HH/HL check) | Verified |
-| **Sync Warnings** | 0 (local ATR calculation success) | Verified |
+These metrics represent the verified output of the backtest conducted on **TestSnr.mq5** over the 3-month validation run (`2025.10.01` to `2025.12.31`):
+*   **Total Consolidated Levels**: Filtered by $S_k \ge 50$ Quality Score.
+*   **Prioritized Levels**: Restricted to a maximum of 3 structural support levels, 3 structural resistance levels, 3 tradable support levels (floors), and 3 tradable resistance levels (ceilings).
+*   **ATR Distance Filter**: Checked and audited. Levels $> 5.0$ ATR distance correctly filtered out, or bypassed strictly via the nearest fallback mechanism.
+*   **Compilation**: 0 Errors, 0 Warnings.
 
 ---
 
 ## 3. Active Parameter Configuration
 
-These inputs are configured in [StructureEngine.mqh](file:///c:/xauusd_chatgpt/src/engines/StructureEngine.mqh#L217-L230) and govern the sensitivity of the structure engine:
+These inputs govern the SNR Prioritization Layer:
 
 ```mql5
-//--- ATR settings
-input int    InpATRPeriod           = 14;     // ATR period
-input double InpBOSBreakMultiplier  = 0.25;   // BOS min break = multiplier * ATR
-input double InpMinSwingDistATR     = 0.50;   // Major Swing: min distance from prev (ATR)
+//--- Output Prioritization Parameters
+input double InpMinPriorityScore        = 50.0;          // Priority: Minimum Quality Score (0-100)
+input double InpMaxTradableDistanceATR  = 5.0;           // Priority: Maximum Tradable Distance (ATR)
 
-//--- Scoring weights
-input int    InpScoreWeightDisplace = 40;     // Score weight: ATR displacement (%)
-input int    InpScoreWeightReaction = 40;     // Score weight: Reaction count (%)
-input int    InpScoreWeightAge      = 20;     // Score weight: Swing age (%)
-
-//--- Tolerance settings
-input double InpReactionTolerance   = 0.15;   // Reaction detection tolerance (ATR)
+//--- Display Profiles
+enum ENUM_DISPLAY_MODE
+{
+   DISPLAY_DEV,      // Developer Mode: Render all details for debugging
+   DISPLAY_ANALYST,  // Analyst Mode: Render all key levels (Score >= 50)
+   DISPLAY_TRADER    // Trader Mode: Render only prioritized Top 3 levels and nearest BSL/SSL
+};
+input ENUM_DISPLAY_MODE InpDisplayMode  = DISPLAY_TRADER; // SNR: Visual display mode
 ```
 
 ---
 
 ## 4. Project Roadmap
 
-```mermaid
-gantt
-    title XAUUSD EA Development Roadmap
-    dateFormat  YYYY-MM-DD
-    section Phase 1: Structure
-    Audit and Validation v2.1     :done,    des1, 2026-06-11, 2026-06-12
-    v2.2 Bug Fixes & Tester Run   :done,    des2, 2026-06-12, 2026-06-12
-    Sprint 1.5 Consolidation      :active,  des3, 2026-06-12, 2026-06-12
-    section Phase 2: Supply & Demand
-    Find Impulse & Base Logic     :todo,    sd1,  2026-06-13, 2026-06-15
-    Build Supply/Demand Zones     :todo,    sd2,  2026-06-15, 2026-06-18
-    Validation & Audit v3.0       :todo,    sd3,  2026-06-18, 2026-06-20
-    section Phase 3: Zone Scoring
-    Reaction & Rejection Scores   :todo,    zs1,  2026-06-20, 2026-06-23
-    section Phase 4: SNR Engine
-    Filter Strongest SR Levels    :todo,    snr1, 2026-06-23, 2026-06-26
-    section Phase 5: Liquidity
-    Equal High/Low, Liquidity Map :todo,    liq1, 2026-06-26, 2026-06-30
-    section Phase 6: Entry & Risk
-    Reversal & Breakout Modes     :todo,    ent1, 2026-07-01, 2026-07-05
-    Risk Lot/SL/TP Calculation    :todo,    rsk1, 2026-07-05, 2026-07-08
-    Trade Manager                 :todo,    mgr1, 2026-07-08, 2026-07-12
+```
+Phase 1: Structure Engine (v2.2) ────────► 🟢 FROZEN
+Phase 2: Supply & Demand Engine (v1.1) ──► 🟢 FROZEN
+Phase 3: SNR Engine & Prioritizer ───────► 🟢 FROZEN (v1.0)
+Phase 4: Liquidity Engine ───────────────► 🟡 ACTIVE PHASE
+Phase 5: Entry Engine ───────────────────► ⚪ Planned
+Phase 6: Risk Management ────────────────► ⚪ Planned
+Phase 7: Portfolio Layer ────────────────► ⚪ Planned
+Phase 8: Live Testing ──────────────────► ⚪ Planned
 ```
 
 ### Roadmap Details
-1.  **Phase 1: Market Structure Engine (Complete)**
-    *   *Goals*: Detect fractal swings, grade Major/Minor, process non-repainting BOS and MSS, and classify strict consecutive trend.
-    *   *Status*: 100% complete and validated.
-2.  **Phase 2: Supply & Demand Engine (Next Priority)**
-    *   *Goals*: Identify institutional order blocks (Base candles preceding an impulse move of >= 2.0 ATR and body dominance >= 60%). Maintain dynamic invalidation tracking when zones are closed past.
-3.  **Phase 3: Zone Scoring Engine**
-    *   *Goals*: Calculate quality scores (0-100) for supply and demand zones based on reaction count, rejection strength, and freshness.
-4.  **Phase 4: SNR Engine**
-    *   *Goals*: Compile scoring zones, sweep zones, and structures into a dynamic map of the 5-15 strongest Support/Resistance levels.
-5.  **Phase 5: Liquidity Engine**
-    *   *Goals*: Map equal highs (EQH) and equal lows (EQL) representing retail stop loss pools, and detect institutional liquidity sweeps.
-6.  **Phase 6: Entry, Risk, and Trade Management**
-    *   *Goals*: Implement reversal/breakout entry engines, lot sizing per risk (0.5% - 2%), trailing stop, partial close, and breakeven.
+1.  **Phase 1: Market Structure Engine (Complete & Frozen)**
+    *   *Status*: v2.2 Frozen. Fractal Swing detection, ATR Swing grading, Trend mapping.
+2.  **Phase 2: Supply & Demand Engine (Complete & Frozen)**
+    *   *Status*: v1.1 Frozen. Impulse Base zones, decay, retests.
+3.  **Phase 3: SNR Engine & Prioritizer (Complete & Frozen)**
+    *   *Status*: v1.0 Frozen. Project levels clustered, neutral conflict nodes tracked, quality score mapped, and filtered/sorted via proximity into `SnrPriorityContract`.
+4.  **Phase 4: Liquidity Engine (Active)**
+    *   *Goals*: Detect stop-loss clusters (BSL/SSL) residing above/below swing points and track sweep runs.
+5.  **Phase 5: Entry Engine (Planned)**
+    *   *Goals*: Integrate priority contract, refine entry setups, generate execution orders.
+6.  **Phase 6: Risk Management (Planned)**
+    *   *Goals*: Fixed 1% risk lot size calculations.
+7.  **Phase 7: Portfolio Layer (Planned)**
+    *   *Goals*: Trailing stops, partial closures, break-even.
+8.  **Phase 8: Live Trading Validation (Planned)**
+    *   *Goals*: Demo/micro account testing.

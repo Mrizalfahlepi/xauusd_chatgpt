@@ -132,39 +132,36 @@ The final production target is a fully automated portfolio execution system comp
 
 ## 6. Current State
 
-*   **Completed**:
+*   **Completed & Frozen**:
     *   Market Structure Engine (Module 1 v2.2) [FROZEN]
     *   Supply & Demand Engine (Module 2 v1.1) [FROZEN]
-    *   Repository Folder Restructuring and Link Updates [COMPLETE]
+    *   SNR Consolidation Engine (Module 3 v1.0) [FROZEN]
+    *   SNR Output Prioritization Engine (`CSnrPriorityEngine` v1.0) [FROZEN]
+    *   Approved interface contract `SnrPriorityContract` [STABLE]
 *   **Active**:
-    *   SNR Engine Specification [APPROVED DESIGN FREEZE]
+    *   Phase 4 — Liquidity Engine
 *   **Next**:
-    *   Build `SnrEngine.mqh` (Module 3 v1.0) based on [SNR_ARCHITECTURE_FREEZE.md](file:///c:/xauusd_chatgpt/docs/design/SNR_ARCHITECTURE_FREEZE.md).
+    *   Build `LiquidityEngine.mqh` (Module 4 v1.0) to track swing liquidity pools and detect sweep run events.
 
 ---
 
 ## 7. Open Risks
 
 1.  **Redundant Price History Scanning**:
-    *   *Risk*: All three modules (Structure, S/D, and SNR) perform separate historical price loops to calculate reactions or rejection distances. If run on every tick, Strategy Tester performance will degrade.
-    *   *Mitigation*: Gate engine logic strictly by new H4 bar closes; cache coordinates to avoid duplicate scanning of historical bars.
-2.  **ATR Volatility Compression/Expansion**:
-    *   *Risk*: Swing grading depends on ATR. During extremely tight consolidations, ATR shrinks, causing noise to be classified as Major swings.
-    *   *Mitigation*: Establish an absolute minimum ATR floor (e.g. 50 pips) inside `StructureEngine.mqh` below which swings cannot be graded as Major.
-3.  **Order-Dependence in Clustering**:
-    *   *Risk*: If levels are not pre-sorted before ATR projection, clustering boundaries will be inconsistent.
-    *   *Mitigation*: Mandate price-ascending sorting prior to executing the clustering loop.
+    *   *Risk*: Multiple modules performing duplicate historical H4 scans can degrade Strategy Tester performance.
+    *   *Mitigation*: Gate engine operations strictly on new H4 bar closes and cache results in memory.
+2.  **ATR Volatility Compression**:
+    *   *Risk*: Tight consolidations shrink ATR, causing minor pivots to be graded as Major swings.
+    *   *Mitigation*: Enforce an absolute minimum ATR floor inside the logic.
 
 ---
 
 ## 8. Next Sprint
 
-**Sprint 3.0: SNR Engine Implementation**
-*   **Goal**: Translate the approved [SNR_ARCHITECTURE_FREEZE.md](file:///c:/xauusd_chatgpt/docs/design/SNR_ARCHITECTURE_FREEZE.md) into MQL5.
-*   **Action**: Create `src/engines/SnrEngine.mqh` implementing:
-    *   Ascending pre-sorting of projected levels.
-    *   ATR-relative clustering ($0.25 \times ATR$ tolerance, capped at $1.50 \times ATR$ width).
-    *   $\ge 50\%$ height overlap zone merging with $20\%$ new-volume freshness reset.
-    *   Neutral consolidation node handling and nested zone (Core vs. Macro) flags.
-    *   The 5-weight scoring formula ($W_{\text{Struct}}=0.20$, $W_{\text{SD}}=0.30$, $W_{\text{Fresh}}=0.20$, $W_{\text{Reject}}=0.20$, $W_{\text{Confl}}=0.10$).
-    *   dedicated EA validator `src/tests/TestSnr.mq5` to draw final SNR bands and liquidity pools on the chart.
+**Phase 4: Liquidity Engine Implementation**
+*   **Goal**: Detect stop-loss pools residing above major swing highs (BSL) and below major swing lows (SSL) on H4/M30.
+*   **Action**: Create `src/engines/LiquidityEngine.mqh` implementing:
+    *   Tracking of active/swept BSL and SSL pools.
+    *   Sweep detection logic (price breaks outer boundary and pulls back on close).
+    *   Mapping results to downstream Entry Engine execution filters.
+    *   Preserve backward compatibility with `SnrPriorityContract` inclusion.

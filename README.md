@@ -11,12 +11,33 @@
 ![Instrument](https://img.shields.io/badge/Instrument-XAUUSD%20(Gold)-FFD700?style=for-the-badge&logo=bitcoinsv&logoColor=black)
 ![Timeframe](https://img.shields.io/badge/Bias-H4-8957e5?style=for-the-badge)
 
-![Status](https://img.shields.io/badge/Genesis-FROZEN%20BASELINE%20v2.3-2ea043?style=flat-square)
+![Status](https://img.shields.io/badge/Genesis-FROZEN%20BASELINE%20v2.4-2ea043?style=flat-square)
 ![Module 1](https://img.shields.io/badge/Structure%20Engine-v2.2%20FROZEN-2ea043?style=flat-square)
 ![Module 2](https://img.shields.io/badge/Supply%2FDemand-v1.1%20FROZEN-2ea043?style=flat-square)
-![Module 3](https://img.shields.io/badge/SNR%20Engine-DESIGN%20FROZEN-d29922?style=flat-square)
+![Module 3](https://img.shields.io/badge/SNR%20Engine-v1.0%20FROZEN-2ea043?style=flat-square)
+![Module 3.4](https://img.shields.io/badge/Priority%20Engine-v1.0%20FROZEN-2ea043?style=flat-square)
 
 </div>
+
+---
+
+## ❄️ CURRENT PROJECT STATUS
+
+> [!IMPORTANT]
+> **Current Phase**: Phase 4 — Liquidity Engine  
+> **Frozen Modules**:  
+> * `StructureEngine` (v2.2)  
+> * `SupplyDemandEngine` (v1.1)  
+> * `SnrEngine` (v1.0)  
+> * `CSnrPriorityEngine` (v1.0)  
+>
+> **Stable Interface Contract**: `SnrPriorityContract`  
+> **Next Milestone**: Phase 4 — Liquidity Engine  
+>
+> **CRITICAL ARCHITECTURAL CONSTRAINTS**:  
+> 1. **Sprint 3 (Consolidation & Prioritization) is strictly frozen.** No redesign or modifications allowed for the scoring logic or engine code.  
+> 2. **No redesign of `SnrPriorityContract`.** Its interface is locked.  
+> 3. **Backward compatibility is mandatory** for all includes and data contracts.
 
 ---
 
@@ -84,8 +105,8 @@ The final production target is a fully automated portfolio execution system buil
 |:-:|--------|:---------:|----------------|:------:|
 | 1 | **Structure Engine** | H4 | Fractal swing detection, ATR-graded major/minor swings, non-repainting BOS & MSS, trend classification | 🟢 **Frozen v2.2** |
 | 2 | **Supply & Demand Engine** | H4 | Impulse-base-displacement order blocks, invalidation tracking, retest counting, quality scoring | 🟢 **Frozen v1.1** |
-| 3 | **SNR Engine** | H4 | Cluster swings + order blocks into consolidated S/R bands with a 5-weight 0–100 score | 🟡 **Design Frozen** |
-| 4 | **Liquidity Engine** | H4/M30 | Detect stop-loss clusters above/below swings, track sweep events | ⚪ Planned |
+| 3 | **SNR Engine & Prioritizer** | H4 | Cluster swings + order blocks into consolidated bands, filter by Quality Score and ATR distance, output bounded contract | 🟢 **Frozen v1.0** |
+| 4 | **Liquidity Engine** | H4/M30 | Detect stop-loss clusters above/below swings, track sweep events, stop run tagging | 🟡 **Active Phase** |
 | 5 | **Entry Engine** | M30 | Refine H4 bias, validate setups (engulfing, pinbar), place limit/market orders | ⚪ Planned |
 | 6 | **Risk Engine** | M30 | Compute lot size from SL distance to maintain fixed 1% risk | ⚪ Planned |
 | 7 | **Portfolio / Trade Mgmt** | M30 | Trailing stops, break-even, partial closes, news deactivation | ⚪ Planned |
@@ -157,7 +178,7 @@ The Supply/Demand fixes alone exposed the true **2.27% false-positive rate**, va
 ROOT/
 ├── PROJECT_GENESIS.md           ← Master project bible (single source of truth)
 ├── AGENT_CONSTITUTION.md        ← Permanent operating law for AI agents
-├── MILESTONE_GENESIS_FREEZE.md  ← Current frozen-state snapshot
+├── MILESTONE_SPRINT_3_FREEZE.md  ← Current frozen-state snapshot (Sprint 3)
 ├── SYSTEM_ROADMAP.md            ← 8-phase development roadmap
 ├── README.md                    ← Recovery entrypoint (read-first protocol)
 ├── ARTICLE.md                   ← You are here 📍
@@ -170,8 +191,8 @@ ROOT/
 │   └── archive/   ← Superseded historical docs
 │
 └── src/
-    ├── engines/   ← StructureEngine.mqh · SupplyDemandEngine.mqh
-    └── tests/     ← TestStructure.mq5 · TestSupplyDemand.mq5
+    ├── engines/   ← StructureEngine.mqh · SupplyDemandEngine.mqh · SnrEngine.mqh · SnrPriorityEngine.mqh
+    └── tests/     ← TestStructure.mq5 · TestSupplyDemand.mq5 · TestSnr.mq5
 ```
 
 ---
@@ -191,16 +212,12 @@ This repo is unusual: it's engineered so that **any AI assistant can be onboarde
 
 ---
 
-## 🚀 What's Next — Sprint 3.0
+## 🚀 Next Phase — Phase 4: Liquidity Engine
 
-Build `src/engines/SnrEngine.mqh`, translating the approved design freeze into MQL5:
-
-- Ascending pre-sorting of projected levels
-- ATR-relative clustering (`0.25 × ATR` tolerance, capped at `1.50 × ATR` width)
-- ≥ 50% overlap zone merging with 20% freshness reset
-- Neutral consolidation node handling + nested Core/Macro flags
-- The 5-weight scoring formula:
-  `W_struct = 0.20 · W_sd = 0.30 · W_fresh = 0.20 · W_reject = 0.20 · W_confl = 0.10`
+Build the Liquidity Engine to detect and process order stops above and below swing points:
+- **Liquidity sweeps (Stop Runs)**: Track when price invalidates major swing highs (BSL) or major swing lows (SSL) and then rapidly returns.
+- **BSL/SSL targets**: Expose active liquidity pools to the Entry Engine.
+- **Stable Interface**: Integrate with and consume the frozen `SnrPriorityContract`.
 
 ---
 
@@ -208,7 +225,7 @@ Build `src/engines/SnrEngine.mqh`, translating the approved design freeze into M
 
 ### 📚 Start Here
 
-[**PROJECT_GENESIS.md**](PROJECT_GENESIS.md) · [**AGENT_CONSTITUTION.md**](AGENT_CONSTITUTION.md) · [**SYSTEM_ROADMAP.md**](SYSTEM_ROADMAP.md) · [**MILESTONE_GENESIS_FREEZE.md**](MILESTONE_GENESIS_FREEZE.md)
+[**PROJECT_GENESIS.md**](PROJECT_GENESIS.md) · [**AGENT_CONSTITUTION.md**](AGENT_CONSTITUTION.md) · [**SYSTEM_ROADMAP.md**](SYSTEM_ROADMAP.md) · [**MILESTONE_SPRINT_3_FREEZE.md**](MILESTONE_SPRINT_3_FREEZE.md)
 
 🤖 **AI agents / contributors start here →** [**RECOVERY_ENTRYPOINT.md**](RECOVERY_ENTRYPOINT.md)
 

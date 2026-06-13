@@ -25,12 +25,12 @@
 
 ---
 
-## Phase 3 — SNR Engine
-*   **Purpose**: Groups nearby swings and order blocks into consolidated horizontal support/resistance levels. Resolves zone conflicts and scores bands on a scale of 0-100.
+## Phase 3 — SNR Engine & Prioritizer
+*   **Purpose**: Groups nearby swings and order blocks into consolidated horizontal support/resistance levels. Filters and ranks levels by Quality Score and price distance, outputs a prioritized contract separating structural and tradable levels, maps nearest BSL/SSL targets, and tracks neutral overlap zones.
 *   **Inputs**: Active/invalidated swings from `CStructureEngine`, active/invalidated zones from `CSupplyDemandEngine`, and local ATR.
-*   **Outputs**: Array of consolidated `SNRLevel` structures (sorted by score quality).
+*   **Outputs**: Bounded priority contract `SnrPriorityContract` containing structural levels (up to 3 support + 3 resistance), tradable levels (up to 3 support + 3 resistance), top 6 neutral nodes, and nearest active BSL and SSL pools.
 *   **Dependencies**: `CStructureEngine` (Module 1), `CSupplyDemandEngine` (Module 2).
-*   **Status**: **APPROVED DESIGN FREEZE (Sprint 3.0 Next Implementation)**.
+*   **Status**: **FROZEN & VALIDATED (Version 1.0)**.
 
 ---
 
@@ -38,8 +38,8 @@
 *   **Purpose**: Identifies stop-loss clusters (liquidity pools) residing above major swing highs and below major swing lows. Tracks sweep events when price runs these pools.
 *   **Inputs**: Major swings from `CStructureEngine`, H4 price data, and local ATR.
 *   **Outputs**: Array of `LiquidityPool` structures (strength, coordinates, swept status).
-*   **Dependencies**: `CStructureEngine` (Module 1).
-*   **Status**: **PLANNED**.
+*   **Dependencies**: `CStructureEngine` (Module 1), `CSnrPriorityEngine` (Module 3 - stable contract integration).
+*   **Status**: **ACTIVE PHASE**.
 
 ---
 

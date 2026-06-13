@@ -18,7 +18,7 @@ This project constructs an institutional-grade, fully automated trading system f
 |:---:|---|:---:|:---:|:---:|---|
 | **1** | **Structure Engine** | H4 | v2.2 | ❄️ **FROZEN** | Major/Minor Swings, BOS/MSS events |
 | **2** | **Supply Demand Engine** | H4 | v1.1 | ❄️ **FROZEN** | Base-Impulse Zones, Retests |
-| **3** | **SNR Engine & Prioritizer** | H4 | v1.0 | ❄️ **FROZEN** | `SnrPriorityContract`, Neutral Nodes |
+| **3** | **SNR Engine & Prioritizer** | H4 | v1.0 | ❄️ **FROZEN** | `SnrPriorityContract`, Neutral Zones |
 | **4** | **Liquidity Engine** | H4/M30 | v1.0 | ❄️ **FROZEN** | `LiquidityPriorityContract`, Stop sweeps |
 | **5** | **Entry Engine** | M30 | — | 🎯 **ACTIVE TARGET** | H4 bias alignment, M30 limit/market orders |
 | **6** | **Risk Engine** | M30 | — | ⚪ Planned | Lot sizing, fixed 1% account risk |
@@ -63,7 +63,7 @@ struct SnrPriorityContract
    
    LiquidityPool  nearestSSL;
    bool           hasSSL;
-};
+ };
 ```
 
 ### 2.2 LiquidityPriorityContract
@@ -109,9 +109,9 @@ Consult documentation in the following reading order:
 
 1. **[RECOVERY_ENTRYPOINT.md](file:///c:/xauusd_chatgpt/RECOVERY_ENTRYPOINT.md)**: Orientation for new developers.
 2. **[PROJECT_GENESIS.md](file:///c:/xauusd_chatgpt/PROJECT_GENESIS.md)**: Authoritative project history.
-3. **[docs/checkpoints/PHASE4_LIQUIDITY_FINAL_CHECKPOINT.md](file:///c:/xauusd_chatgpt/docs/checkpoints/PHASE4_LIQUIDITY_FINAL_CHECKPOINT.md)**: Main Phase 4 checkpoint summary.
-4. **[docs/checkpoints/HANDOVER_FOR_NEXT_AGENT.md](file:///c:/xauusd_chatgpt/docs/checkpoints/HANDOVER_FOR_NEXT_AGENT.md)**: Handbook for the next AI agent (onboarding < 10 mins).
-5. **[docs/checkpoints/PHASE4_DECISION_LOG.md](file:///c:/xauusd_chatgpt/docs/checkpoints/PHASE4_DECISION_LOG.md)**: Chronological decisions for Phase 4.
-6. **[docs/reports/GROUP_D_RISK_REWARD_AUDIT.md](file:///c:/xauusd_chatgpt/docs/reports/GROUP_D_RISK_REWARD_AUDIT.md)**: Trade management expectancy calculations.
-7. **[docs/reports/GROUP_D_TEMPORAL_STABILITY_AUDIT.md](file:///c:/xauusd_chatgpt/docs/reports/GROUP_D_TEMPORAL_STABILITY_AUDIT.md)**: Yearly stability analysis.
+3. **[docs/checkpoints/PHASE4_EXECUTIVE_SUMMARY.md](file:///c:/xauusd_chatgpt/docs/checkpoints/PHASE4_EXECUTIVE_SUMMARY.md)**: Master Phase 4 executive summary and GO/NO-GO verdict.
+4. **[docs/checkpoints/PHASE4_LIQUIDITY_FINAL_CHECKPOINT.md](file:///c:/xauusd_chatgpt/docs/checkpoints/PHASE4_LIQUIDITY_FINAL_CHECKPOINT.md)**: Main Phase 4 checkpoint summary.
+5. **[docs/checkpoints/HANDOVER_FOR_NEXT_AGENT.md](file:///c:/xauusd_chatgpt/docs/checkpoints/HANDOVER_FOR_NEXT_AGENT.md)**: Handbook for the next AI agent (onboarding < 10 mins).
+6. **[docs/checkpoints/PHASE4_DECISION_LOG.md](file:///c:/xauusd_chatgpt/docs/checkpoints/PHASE4_DECISION_LOG.md)**: Chronological decisions for Phase 4.
+7. **[docs/checkpoints/PHASE4_RESEARCH_INDEX.md](file:///c:/xauusd_chatgpt/docs/checkpoints/PHASE4_RESEARCH_INDEX.md)**: Reference index of all untracked reports.
 8. **[SYSTEM_ROADMAP.md](file:///c:/xauusd_chatgpt/SYSTEM_ROADMAP.md)**: Master phase roadmap.

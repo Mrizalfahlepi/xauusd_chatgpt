@@ -2,6 +2,10 @@
 
 This handbook is designed to onboard a brand-new AI agent in **under 10 minutes** to resume the development of the XAUUSD Institutional EA.
 
+> [!IMPORTANT]
+> **Phase 4 Status**: Frozen under tag `LiquidityEngine_v1_Validated`.
+> Before proceeding to Phase 5, read the master [PHASE4_EXECUTIVE_SUMMARY.md](file:///c:/xauusd_chatgpt/docs/checkpoints/PHASE4_EXECUTIVE_SUMMARY.md) to understand the explicit GO/NO-GO execution boundaries.
+
 ---
 
 ## 1. System Pipeline Architecture

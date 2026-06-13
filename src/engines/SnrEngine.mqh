@@ -290,6 +290,9 @@ public:
 
    //--- New bar detection
    bool                   IsNewBar();
+
+   //--- ATR Accessor
+   double                 GetLocalATR(int barIndex) { return CalculateLocalATR(barIndex); }
 };
 
 //=========================================================

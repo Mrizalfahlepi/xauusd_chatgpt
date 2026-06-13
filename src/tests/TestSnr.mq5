@@ -24,6 +24,7 @@
 
 //--- Include Engine Chain
 #include "../engines/SnrEngine.mqh"
+#include "../engines/SnrPriorityEngine.mqh"
 
 //=========================================================
 // INPUT PARAMETERS
@@ -37,6 +38,19 @@ input bool   InpShowLiquidity     = true;          // Show liquidity pools
 input bool   InpShowNeutral       = true;          // Show neutral nodes
 input bool   InpShowNested        = true;          // Show core/macro labels
 input bool   InpShowPanel         = true;          // Show info dashboard
+
+//--- Output Prioritization Parameters
+input double InpMinPriorityScore        = 50.0;          // Priority: Minimum Quality Score (0-100)
+input double InpMaxTradableDistanceATR  = 5.0;           // Priority: Maximum Tradable Distance (ATR)
+
+//--- Display Profiles
+enum ENUM_DISPLAY_MODE
+{
+   DISPLAY_DEV,      // Developer Mode: Render all details for debugging
+   DISPLAY_ANALYST,  // Analyst Mode: Render all key levels (Score >= 50)
+   DISPLAY_TRADER    // Trader Mode: Render only prioritized Top 3 levels and nearest BSL/SSL
+};
+input ENUM_DISPLAY_MODE InpDisplayMode  = DISPLAY_TRADER; // SNR: Visual display mode
 
 //--- SNR Level Color Tiers (by score range)
 input color  InpColorTier1        = clrGold;       // Score 80-100 (Elite)
@@ -67,6 +81,7 @@ input color  InpColorMacro        = clrWheat;      // Macro zone label
 CStructureEngine    gStructureEngine;
 CSupplyDemandEngine gSDEngine;
 CSnrEngine          gSnrEngine;
+CSnrPriorityEngine  gPriorityEngine;
 string              gObjectPrefix = "SNR_";
 bool                gFirstRun     = true;
 
@@ -146,6 +161,13 @@ void OnTick()
    //--- Step 3: Run SNR Engine
    int levelCount = gSnrEngine.Analyze(InpTestMaxBars);
 
+   //--- Step 3.5: Run SNR Priority Engine
+   double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+   if(currentPrice <= 0.0)
+      currentPrice = iClose(_Symbol, PERIOD_H4, 0);
+   double atr = gSnrEngine.GetLocalATR(1);
+   gPriorityEngine.Process(GetPointer(gSnrEngine), currentPrice, atr, InpMinPriorityScore, InpMaxTradableDistanceATR);
+
    //--- Step 4: Draw all SNR visualizations
    if(InpShowLevels)
       DrawSNRLevels();
@@ -181,199 +203,281 @@ void CleanupObjects()
 //=========================================================
 
 //+------------------------------------------------------------------+
-//| DrawSNRLevels: Render SNR level bands as chart rectangles        |
-//|   Color-coded by score tier, with score labels                   |
+//| DrawLevelHelper: Render a single SNR Level                       |
 //+------------------------------------------------------------------+
-void DrawSNRLevels()
+void DrawLevelHelper(const SNRLevel &level, bool isAnalystNeutral = false)
 {
-   int count = gSnrEngine.GetLevelCount();
    datetime currentBarTime = iTime(_Symbol, PERIOD_H4, 0);
    if(currentBarTime == 0) return;
 
-   for(int i = 0; i < count; i++)
+   string rectName  = gObjectPrefix + "LVL_" + IntegerToString(level.id);
+   string scoreName = gObjectPrefix + "SCR_" + IntegerToString(level.id);
+   string tagName   = gObjectPrefix + "TAG_" + IntegerToString(level.id);
+
+   //--- Determine color by score tier
+   color levelColor = GetScoreTierColor(level.scoreTotal);
+
+   //--- Override for neutral nodes
+   bool fillRect = true;
+   ENUM_LINE_STYLE lineStyle = STYLE_SOLID;
+   int lineWidth = 1;
+   color borderColor = levelColor;
+
+   if(level.isNeutralNode)
    {
-      SNRLevel level;
-      if(!gSnrEngine.GetLevel(i, level)) continue;
-
-      string rectName  = gObjectPrefix + "LVL_" + IntegerToString(level.id);
-      string scoreName = gObjectPrefix + "SCR_" + IntegerToString(level.id);
-      string tagName   = gObjectPrefix + "TAG_" + IntegerToString(level.id);
-
-      //--- Determine color by score tier
-      color levelColor = GetScoreTierColor(level.scoreTotal);
-
-      //--- Override for neutral nodes
-      bool fillRect = true;
-      ENUM_LINE_STYLE lineStyle = STYLE_SOLID;
-      int lineWidth = 1;
-      color borderColor = levelColor;
-
-      if(level.isNeutralNode)
+      if(!InpShowNeutral) return;
+      levelColor = InpColorNeutral;
+      if(isAnalystNeutral)
       {
-         if(!InpShowNeutral) continue;
-         levelColor = InpColorNeutral;
+         borderColor = clrLightGray; // analyst mode: light border
+         lineStyle = STYLE_DASH;
+         lineWidth = 1;
+      }
+      else
+      {
          borderColor = InpColorNeutralBorder;
-         fillRect = false;
          lineStyle = STYLE_DASHDOT;
          lineWidth = 2;
       }
+      fillRect = false;
+   }
 
-      //--- Calculate start time: use creation time or current window
-      datetime startTime = level.creationTime;
-      if(startTime == 0) startTime = iTime(_Symbol, PERIOD_H4, InpTestMaxBars - 1);
+   //--- Calculate start time: use creation time or current window
+   datetime startTime = level.creationTime;
+   if(startTime == 0) startTime = iTime(_Symbol, PERIOD_H4, InpTestMaxBars - 1);
 
-      //--- Draw the level band rectangle
-      if(ObjectCreate(0, rectName, OBJ_RECTANGLE, 0, startTime, level.priceHigh,
-                      currentBarTime, level.priceLow))
+   //--- Draw the level band rectangle
+   if(ObjectCreate(0, rectName, OBJ_RECTANGLE, 0, startTime, level.priceHigh,
+                   currentBarTime, level.priceLow))
+   {
+      ObjectSetInteger(0, rectName, OBJPROP_COLOR, borderColor);
+      ObjectSetInteger(0, rectName, OBJPROP_FILL, fillRect);
+      ObjectSetInteger(0, rectName, OBJPROP_BACK, true);
+      ObjectSetInteger(0, rectName, OBJPROP_STYLE, lineStyle);
+      ObjectSetInteger(0, rectName, OBJPROP_WIDTH, lineWidth);
+      ObjectSetInteger(0, rectName, OBJPROP_SELECTABLE, false);
+      ObjectSetInteger(0, rectName, OBJPROP_HIDDEN, true);
+
+      //--- Build tooltip
+      string tipDirection = level.isBullish ? "SUPPORT" : "RESISTANCE";
+      string tipFresh     = level.isFresh ? "FRESH" : ("Reacts=" + IntegerToString(level.reactionCount));
+      string tipFlags     = "";
+      if(level.isNeutralNode)    tipFlags += " [NEUTRAL]";
+      if(level.isCoreZone)       tipFlags += " [CORE]";
+      if(level.isMacroZone)      tipFlags += " [MACRO]";
+      if(level.hasBOSOrigin)     tipFlags += " [BOS]";
+
+      ObjectSetString(0, rectName, OBJPROP_TOOLTIP,
+         "SNR #" + IntegerToString(level.id) +
+         " | " + tipDirection +
+         " | Score=" + DoubleToString(level.scoreTotal, 1) +
+         " | " + tipFresh +
+         " | Consts=" + IntegerToString(level.constituentCount) +
+         tipFlags);
+   }
+
+   //--- Draw score label at the right edge of the level band
+   if(InpShowScores && !level.isNeutralNode)
+   {
+      string scoreText = DoubleToString(level.scoreTotal, 1);
+      double labelPrice = level.priceMid;
+
+      if(ObjectCreate(0, scoreName, OBJ_TEXT, 0, currentBarTime, labelPrice))
       {
-         ObjectSetInteger(0, rectName, OBJPROP_COLOR, borderColor);
-         ObjectSetInteger(0, rectName, OBJPROP_FILL, fillRect);
-         ObjectSetInteger(0, rectName, OBJPROP_BACK, true);
-         ObjectSetInteger(0, rectName, OBJPROP_STYLE, lineStyle);
-         ObjectSetInteger(0, rectName, OBJPROP_WIDTH, lineWidth);
-         ObjectSetInteger(0, rectName, OBJPROP_SELECTABLE, false);
-         ObjectSetInteger(0, rectName, OBJPROP_HIDDEN, true);
-
-         //--- Build tooltip
-         string tipDirection = level.isBullish ? "SUPPORT" : "RESISTANCE";
-         string tipFresh     = level.isFresh ? "FRESH" : ("Reacts=" + IntegerToString(level.reactionCount));
-         string tipFlags     = "";
-         if(level.isNeutralNode)    tipFlags += " [NEUTRAL]";
-         if(level.isCoreZone)       tipFlags += " [CORE]";
-         if(level.isMacroZone)      tipFlags += " [MACRO]";
-         if(level.hasBOSOrigin)     tipFlags += " [BOS]";
-
-         ObjectSetString(0, rectName, OBJPROP_TOOLTIP,
-            "SNR #" + IntegerToString(level.id) +
-            " | " + tipDirection +
-            " | Score=" + DoubleToString(level.scoreTotal, 1) +
-            " | " + tipFresh +
-            " | Consts=" + IntegerToString(level.constituentCount) +
-            tipFlags);
+         ObjectSetString(0, scoreName, OBJPROP_TEXT, scoreText);
+         ObjectSetInteger(0, scoreName, OBJPROP_COLOR, levelColor);
+         ObjectSetInteger(0, scoreName, OBJPROP_FONTSIZE, 9);
+         ObjectSetString(0, scoreName, OBJPROP_FONT, "Arial Bold");
+         ObjectSetInteger(0, scoreName, OBJPROP_ANCHOR, ANCHOR_LEFT);
+         ObjectSetInteger(0, scoreName, OBJPROP_SELECTABLE, false);
+         ObjectSetInteger(0, scoreName, OBJPROP_HIDDEN, true);
       }
+   }
 
-      //--- Draw score label at the right edge of the level band
-      if(InpShowScores && !level.isNeutralNode)
+   //--- Draw direction + special tag labels
+   if(InpShowNested || InpShowNeutral)
+   {
+      string tagText = "";
+
+      if(level.isNeutralNode)
+         tagText = "NEUTRAL";
+      else if(level.isCoreZone && InpShowNested)
+         tagText = "CORE";
+      else if(level.isMacroZone && InpShowNested)
+         tagText = "MACRO";
+
+      if(tagText != "")
       {
-         string scoreText = DoubleToString(level.scoreTotal, 1);
-         double labelPrice = level.priceMid;
+         color tagColor = clrWhite;
+         if(level.isNeutralNode)    tagColor = InpColorNeutralBorder;
+         else if(level.isCoreZone)  tagColor = InpColorCore;
+         else if(level.isMacroZone) tagColor = InpColorMacro;
 
-         if(ObjectCreate(0, scoreName, OBJ_TEXT, 0, currentBarTime, labelPrice))
+         if(ObjectCreate(0, tagName, OBJ_TEXT, 0, startTime, level.priceHigh))
          {
-            ObjectSetString(0, scoreName, OBJPROP_TEXT, scoreText);
-            ObjectSetInteger(0, scoreName, OBJPROP_COLOR, levelColor);
-            ObjectSetInteger(0, scoreName, OBJPROP_FONTSIZE, 9);
-            ObjectSetString(0, scoreName, OBJPROP_FONT, "Arial Bold");
-            ObjectSetInteger(0, scoreName, OBJPROP_ANCHOR, ANCHOR_LEFT);
-            ObjectSetInteger(0, scoreName, OBJPROP_SELECTABLE, false);
-            ObjectSetInteger(0, scoreName, OBJPROP_HIDDEN, true);
-         }
-      }
-
-      //--- Draw direction + special tag labels
-      if(InpShowNested || InpShowNeutral)
-      {
-         string tagText = "";
-
-         if(level.isNeutralNode)
-            tagText = "NEUTRAL";
-         else if(level.isCoreZone && InpShowNested)
-            tagText = "CORE";
-         else if(level.isMacroZone && InpShowNested)
-            tagText = "MACRO";
-
-         if(tagText != "")
-         {
-            color tagColor = clrWhite;
-            if(level.isNeutralNode)    tagColor = InpColorNeutralBorder;
-            else if(level.isCoreZone)  tagColor = InpColorCore;
-            else if(level.isMacroZone) tagColor = InpColorMacro;
-
-            if(ObjectCreate(0, tagName, OBJ_TEXT, 0, startTime, level.priceHigh))
-            {
-               ObjectSetString(0, tagName, OBJPROP_TEXT, tagText);
-               ObjectSetInteger(0, tagName, OBJPROP_COLOR, tagColor);
-               ObjectSetInteger(0, tagName, OBJPROP_FONTSIZE, 8);
-               ObjectSetString(0, tagName, OBJPROP_FONT, "Arial Bold");
-               ObjectSetInteger(0, tagName, OBJPROP_ANCHOR, ANCHOR_LEFT_LOWER);
-               ObjectSetInteger(0, tagName, OBJPROP_SELECTABLE, false);
-               ObjectSetInteger(0, tagName, OBJPROP_HIDDEN, true);
-            }
+            ObjectSetString(0, tagName, OBJPROP_TEXT, tagText);
+            ObjectSetInteger(0, tagName, OBJPROP_COLOR, tagColor);
+            ObjectSetInteger(0, tagName, OBJPROP_FONTSIZE, 8);
+            ObjectSetString(0, tagName, OBJPROP_FONT, "Arial Bold");
+            ObjectSetInteger(0, tagName, OBJPROP_ANCHOR, ANCHOR_LEFT_LOWER);
+            ObjectSetInteger(0, tagName, OBJPROP_SELECTABLE, false);
+            ObjectSetInteger(0, tagName, OBJPROP_HIDDEN, true);
          }
       }
    }
 }
 
 //+------------------------------------------------------------------+
-//| DrawLiquidityPools: Render liquidity pools as dashed boxes       |
+//| DrawSNRLevels: Render SNR level bands based on display profile    |
 //+------------------------------------------------------------------+
-void DrawLiquidityPools()
+void DrawSNRLevels()
 {
-   int poolCount = gSnrEngine.GetPoolCount();
+   if(InpDisplayMode == DISPLAY_DEV)
+   {
+      int count = gSnrEngine.GetLevelCount();
+      for(int i = 0; i < count; i++)
+      {
+         SNRLevel level;
+         if(gSnrEngine.GetLevel(i, level))
+            DrawLevelHelper(level, false);
+      }
+   }
+   else if(InpDisplayMode == DISPLAY_ANALYST)
+   {
+      int count = gSnrEngine.GetLevelCount();
+      for(int i = 0; i < count; i++)
+      {
+         SNRLevel level;
+         if(gSnrEngine.GetLevel(i, level))
+         {
+            if(level.isNeutralNode)
+               DrawLevelHelper(level, true);
+            else if(level.scoreTotal >= InpMinPriorityScore)
+               DrawLevelHelper(level, false);
+         }
+      }
+   }
+   else if(InpDisplayMode == DISPLAY_TRADER)
+   {
+      int supportCount = gPriorityEngine.GetSupportCount();
+      for(int i = 0; i < supportCount; i++)
+      {
+         SNRLevel level;
+         if(gPriorityEngine.GetSupport(i, level))
+            DrawLevelHelper(level, false);
+      }
+
+      int resistanceCount = gPriorityEngine.GetResistanceCount();
+      for(int i = 0; i < resistanceCount; i++)
+      {
+         SNRLevel level;
+         if(gPriorityEngine.GetResistance(i, level))
+            DrawLevelHelper(level, false);
+      }
+   }
+}
+
+//+------------------------------------------------------------------+
+//| DrawPoolHelper: Render a single Liquidity Pool                   |
+//+------------------------------------------------------------------+
+void DrawPoolHelper(const LiquidityPool &pool)
+{
    datetime currentBarTime = iTime(_Symbol, PERIOD_H4, 0);
    if(currentBarTime == 0) return;
 
-   for(int i = 0; i < poolCount; i++)
+   string rectName  = gObjectPrefix + "POOL_" + IntegerToString(pool.id);
+   string labelName = gObjectPrefix + "PLBL_" + IntegerToString(pool.id);
+
+   //--- Determine color
+   color poolColor = pool.isBuyLiquidity ? InpColorBuyPool : InpColorSellPool;
+   ENUM_LINE_STYLE poolStyle = STYLE_DASH;
+
+   if(pool.isSwept)
+   {
+      poolColor = InpColorSweptPool;
+      poolStyle = STYLE_DOT;
+   }
+
+   //--- Determine time boundaries
+   datetime endTime = pool.isSwept ? pool.sweptTime : currentBarTime;
+
+   // Use a lookback window for the start time
+   datetime startTime = iTime(_Symbol, PERIOD_H4, MathMin(InpTestMaxBars - 1, iBars(_Symbol, PERIOD_H4) - 1));
+   if(startTime == 0) startTime = currentBarTime;
+
+   //--- Draw pool rectangle (outline only, no fill)
+   if(ObjectCreate(0, rectName, OBJ_RECTANGLE, 0, startTime, pool.priceHigh,
+                   endTime, pool.priceLow))
+   {
+      ObjectSetInteger(0, rectName, OBJPROP_COLOR, poolColor);
+      ObjectSetInteger(0, rectName, OBJPROP_FILL, false);
+      ObjectSetInteger(0, rectName, OBJPROP_BACK, false);
+      ObjectSetInteger(0, rectName, OBJPROP_STYLE, poolStyle);
+      ObjectSetInteger(0, rectName, OBJPROP_WIDTH, 1);
+      ObjectSetInteger(0, rectName, OBJPROP_SELECTABLE, false);
+      ObjectSetInteger(0, rectName, OBJPROP_HIDDEN, true);
+
+      string poolType = pool.isBuyLiquidity ? "BUY STOPS" : "SELL STOPS";
+      string sweptStr = pool.isSwept ? " [SWEPT]" : "";
+      ObjectSetString(0, rectName, OBJPROP_TOOLTIP,
+         "Pool #" + IntegerToString(pool.id) +
+         " | " + poolType +
+         " | Strength=" + DoubleToString(pool.liquidityStrength, 1) +
+         sweptStr);
+   }
+
+   //--- Draw pool type label
+   string lblText = pool.isBuyLiquidity ? "BSL" : "SSL";
+   if(pool.isSwept) lblText = "x" + lblText;
+
+   if(ObjectCreate(0, labelName, OBJ_TEXT, 0, endTime, pool.priceHigh))
+   {
+      ObjectSetString(0, labelName, OBJPROP_TEXT, lblText);
+      ObjectSetInteger(0, labelName, OBJPROP_COLOR, poolColor);
+      ObjectSetInteger(0, labelName, OBJPROP_FONTSIZE, 8);
+      ObjectSetString(0, labelName, OBJPROP_FONT, "Arial Bold");
+      ObjectSetInteger(0, labelName, OBJPROP_ANCHOR,
+         pool.isBuyLiquidity ? ANCHOR_LEFT_LOWER : ANCHOR_LEFT_UPPER);
+      ObjectSetInteger(0, labelName, OBJPROP_SELECTABLE, false);
+      ObjectSetInteger(0, labelName, OBJPROP_HIDDEN, true);
+   }
+}
+
+//+------------------------------------------------------------------+
+//| DrawLiquidityPools: Render liquidity pools based on display mode |
+//+------------------------------------------------------------------+
+void DrawLiquidityPools()
+{
+   if(InpDisplayMode == DISPLAY_DEV)
+   {
+      int poolCount = gSnrEngine.GetPoolCount();
+      for(int i = 0; i < poolCount; i++)
+      {
+         LiquidityPool pool;
+         if(gSnrEngine.GetPool(i, pool))
+            DrawPoolHelper(pool);
+      }
+   }
+   else if(InpDisplayMode == DISPLAY_ANALYST)
+   {
+      int poolCount = gSnrEngine.GetPoolCount();
+      for(int i = 0; i < poolCount; i++)
+      {
+         LiquidityPool pool;
+         if(gSnrEngine.GetPool(i, pool))
+         {
+            if(!pool.isSwept)
+               DrawPoolHelper(pool);
+         }
+      }
+   }
+   else if(InpDisplayMode == DISPLAY_TRADER)
    {
       LiquidityPool pool;
-      if(!gSnrEngine.GetPool(i, pool)) continue;
-
-      string rectName  = gObjectPrefix + "POOL_" + IntegerToString(pool.id);
-      string labelName = gObjectPrefix + "PLBL_" + IntegerToString(pool.id);
-
-      //--- Determine color
-      color poolColor = pool.isBuyLiquidity ? InpColorBuyPool : InpColorSellPool;
-      ENUM_LINE_STYLE poolStyle = STYLE_DASH;
-
-      if(pool.isSwept)
-      {
-         poolColor = InpColorSweptPool;
-         poolStyle = STYLE_DOT;
-      }
-
-      //--- Determine time boundaries
-      datetime endTime = pool.isSwept ? pool.sweptTime : currentBarTime;
-
-      // Use a lookback window for the start time
-      datetime startTime = iTime(_Symbol, PERIOD_H4, MathMin(InpTestMaxBars - 1, iBars(_Symbol, PERIOD_H4) - 1));
-      if(startTime == 0) startTime = currentBarTime;
-
-      //--- Draw pool rectangle (outline only, no fill)
-      if(ObjectCreate(0, rectName, OBJ_RECTANGLE, 0, startTime, pool.priceHigh,
-                      endTime, pool.priceLow))
-      {
-         ObjectSetInteger(0, rectName, OBJPROP_COLOR, poolColor);
-         ObjectSetInteger(0, rectName, OBJPROP_FILL, false);
-         ObjectSetInteger(0, rectName, OBJPROP_BACK, false);
-         ObjectSetInteger(0, rectName, OBJPROP_STYLE, poolStyle);
-         ObjectSetInteger(0, rectName, OBJPROP_WIDTH, 1);
-         ObjectSetInteger(0, rectName, OBJPROP_SELECTABLE, false);
-         ObjectSetInteger(0, rectName, OBJPROP_HIDDEN, true);
-
-         string poolType = pool.isBuyLiquidity ? "BUY STOPS" : "SELL STOPS";
-         string sweptStr = pool.isSwept ? " [SWEPT]" : "";
-         ObjectSetString(0, rectName, OBJPROP_TOOLTIP,
-            "Pool #" + IntegerToString(pool.id) +
-            " | " + poolType +
-            " | Strength=" + DoubleToString(pool.liquidityStrength, 1) +
-            sweptStr);
-      }
-
-      //--- Draw pool type label
-      string lblText = pool.isBuyLiquidity ? "BSL" : "SSL";
-      if(pool.isSwept) lblText = "x" + lblText;
-
-      if(ObjectCreate(0, labelName, OBJ_TEXT, 0, endTime, pool.priceHigh))
-      {
-         ObjectSetString(0, labelName, OBJPROP_TEXT, lblText);
-         ObjectSetInteger(0, labelName, OBJPROP_COLOR, poolColor);
-         ObjectSetInteger(0, labelName, OBJPROP_FONTSIZE, 8);
-         ObjectSetString(0, labelName, OBJPROP_FONT, "Arial Bold");
-         ObjectSetInteger(0, labelName, OBJPROP_ANCHOR,
-            pool.isBuyLiquidity ? ANCHOR_LEFT_LOWER : ANCHOR_LEFT_UPPER);
-         ObjectSetInteger(0, labelName, OBJPROP_SELECTABLE, false);
-         ObjectSetInteger(0, labelName, OBJPROP_HIDDEN, true);
-      }
+      if(gPriorityEngine.GetNearestBSL(pool))
+         DrawPoolHelper(pool);
+      if(gPriorityEngine.GetNearestSSL(pool))
+         DrawPoolHelper(pool);
    }
 }
 
@@ -683,6 +787,89 @@ void PrintSummary()
       Print("  Neutral Nodes:  ", neutralLevels);
    }
 
+   //--- Print SNR Priority Contract details
+   SnrPriorityContract contract;
+   gPriorityEngine.GetContract(contract);
+
+   Print("====================================================");
+   Print("     SNR PRIORITY CONTRACT SUMMARY");
+   Print("====================================================");
+   Print("  Current Price:   ", DoubleToString(contract.currentPrice, _Digits));
+   Print("  ATR (14):        ", DoubleToString(contract.atr, 4));
+   Print("  ---");
+   Print("  Prioritized Structural Support (Count=", contract.supportCount, "):");
+   for(int i = 0; i < contract.supportCount; i++)
+   {
+      double dist = MathAbs(contract.supportLevels[i].priceMid - contract.currentPrice);
+      double distATR = (contract.atr > 0) ? dist / contract.atr : 0;
+      Print("    #", i, " | ID=", contract.supportLevels[i].id,
+            " | Mid=", DoubleToString(contract.supportLevels[i].priceMid, _Digits),
+            " | Score=", DoubleToString(contract.supportLevels[i].scoreTotal, 1),
+            " | Dist=", DoubleToString(dist, _Digits),
+            " (", DoubleToString(distATR, 2), " ATR)");
+   }
+   Print("  Prioritized Structural Resistance (Count=", contract.resistanceCount, "):");
+   for(int i = 0; i < contract.resistanceCount; i++)
+   {
+      double dist = MathAbs(contract.resistanceLevels[i].priceMid - contract.currentPrice);
+      double distATR = (contract.atr > 0) ? dist / contract.atr : 0;
+      Print("    #", i, " | ID=", contract.resistanceLevels[i].id,
+            " | Mid=", DoubleToString(contract.resistanceLevels[i].priceMid, _Digits),
+            " | Score=", DoubleToString(contract.resistanceLevels[i].scoreTotal, 1),
+            " | Dist=", DoubleToString(dist, _Digits),
+            " (", DoubleToString(distATR, 2), " ATR)");
+   }
+   Print("  ---");
+   Print("  Prioritized Tradable Support (Count=", contract.tradableSupportCount, "):");
+   for(int i = 0; i < contract.tradableSupportCount; i++)
+   {
+      double dist = MathAbs(contract.tradableSupport[i].priceMid - contract.currentPrice);
+      double distATR = (contract.atr > 0) ? dist / contract.atr : 0;
+      Print("    #", i, " | ID=", contract.tradableSupport[i].id,
+            " | Mid=", DoubleToString(contract.tradableSupport[i].priceMid, _Digits),
+            " | Score=", DoubleToString(contract.tradableSupport[i].scoreTotal, 1),
+            " | Dist=", DoubleToString(dist, _Digits),
+            " (", DoubleToString(distATR, 2), " ATR)");
+   }
+   Print("  Prioritized Tradable Resistance (Count=", contract.tradableResistanceCount, "):");
+   for(int i = 0; i < contract.tradableResistanceCount; i++)
+   {
+      double dist = MathAbs(contract.tradableResistance[i].priceMid - contract.currentPrice);
+      double distATR = (contract.atr > 0) ? dist / contract.atr : 0;
+      Print("    #", i, " | ID=", contract.tradableResistance[i].id,
+            " | Mid=", DoubleToString(contract.tradableResistance[i].priceMid, _Digits),
+            " | Score=", DoubleToString(contract.tradableResistance[i].scoreTotal, 1),
+            " | Dist=", DoubleToString(dist, _Digits),
+            " (", DoubleToString(distATR, 2), " ATR)");
+   }
+   Print("  ---");
+   Print("  Liquidity Targets:");
+   if(contract.hasBSL)
+      Print("    BSL: Pool #", contract.nearestBSL.id,
+            " | Range=", DoubleToString(contract.nearestBSL.priceLow, _Digits),
+            "-", DoubleToString(contract.nearestBSL.priceHigh, _Digits),
+            " | Strength=", DoubleToString(contract.nearestBSL.liquidityStrength, 1));
+   else
+      Print("    BSL: None");
+
+   if(contract.hasSSL)
+      Print("    SSL: Pool #", contract.nearestSSL.id,
+            " | Range=", DoubleToString(contract.nearestSSL.priceLow, _Digits),
+            "-", DoubleToString(contract.nearestSSL.priceHigh, _Digits),
+            " | Strength=", DoubleToString(contract.nearestSSL.liquidityStrength, 1));
+   else
+      Print("    SSL: None");
+   Print("  ---");
+   Print("  Neutral Nodes (Count=", contract.neutralCount, "):");
+   for(int i = 0; i < contract.neutralCount; i++)
+   {
+      double dist = MathAbs(contract.neutralNodes[i].priceMid - contract.currentPrice);
+      Print("    #", i, " | ID=", contract.neutralNodes[i].id,
+            " | Mid=", DoubleToString(contract.neutralNodes[i].priceMid, _Digits),
+            " | Range=", DoubleToString(contract.neutralNodes[i].priceLow, _Digits),
+            "-", DoubleToString(contract.neutralNodes[i].priceHigh, _Digits),
+            " | Dist=", DoubleToString(dist, _Digits));
+   }
    Print("====================================================");
 }
 

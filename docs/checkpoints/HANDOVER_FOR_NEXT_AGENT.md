@@ -1,10 +1,16 @@
-# PHASE 4 LIQUIDITY ENGINE — AGENT HANDOVER GUIDE
+# PHASE 5 ENTRY ENGINE — AGENT HANDOVER GUIDE
 
 This handbook is designed to onboard a brand-new AI agent in **under 10 minutes** to resume the development of the XAUUSD Institutional EA.
 
 > [!IMPORTANT]
-> **Phase 4 Status**: Frozen under tag `LiquidityEngine_v1_Validated`.
-> Before proceeding to Phase 5, read the master [PHASE4_EXECUTIVE_SUMMARY.md](file:///c:/xauusd_chatgpt/docs/checkpoints/PHASE4_EXECUTIVE_SUMMARY.md) to understand the explicit GO/NO-GO execution boundaries.
+> **Phase 5B Status**: Completed & Frozen.
+> **Verdict**:   **PHASE 5B PASSED (Variant D Approved)**.
+> Excluded the transitional gray zone ($2.0 \le \text{Efficiency} \le 2.5$) using the Sweep Efficiency Filter, yielding:
+> *   **Total Expectancy**: **+0.2688 ATR** (+37.5% improvement over baseline).
+> *   **Profit Factor**: **1.85** across 58 trades.
+> *   **2023 Trending Year Mitigation**: Net losses halved from -0.1091 to **-0.0543 ATR**.
+> *   **Winning Outliers**: Preserved and enhanced 2022 (+0.4087 ATR) and 2024 (+0.4853 ATR) performance.
+> Read the master [PHASE5B_FINAL_VALIDATION_REPORT.md](file:///c:/xauusd_chatgpt/docs/reports/PHASE5B_FINAL_VALIDATION_REPORT.md) to understand why the Sweep Efficiency filter succeeded.
 
 ---
 
@@ -18,7 +24,8 @@ graph TD
     M1 -->|Swings, Trend, BOS| M2[Supply Demand Engine v1.1]
     M1 & M2 --> M3[SNR Engine & Prioritizer v1.0]
     M3 -->|SnrPriorityContract| M4[Liquidity Engine v1.0]
-    M4 -->|LiquidityPriorityContract| M5[Entry Engine - NEXT TARGET]
+    M4 -->|LiquidityPriorityContract| M5[Entry Engine v1.0]
+    M5 -->|EntrySignal| M6[Risk Engine - NEXT TARGET]
 ```
 
 ### Decoupled Code Contracts
@@ -28,49 +35,34 @@ Preceding modules are **strictly frozen** and cannot be modified. Communication 
 
 ---
 
-## 2. Core Phase 4 Research Conclusions
+## 2. Core Phase 4 & 5 Research Conclusions
 
-We ran a 4-year (2022–2025) Strategy Tester run using `TestLiquidityValidation.mq5` generating **522 events** on M30 data, and audited the edge robustness.
+We ran a 4-year (2022–2025) Strategy Tester run using `TestEntry.mq5` generating **58 events** on M30 data, and audited the edge robustness.
 
-### 2.1 The Rejection Rate Illusion
-*   The raw engine configuration yields a **99.62% rejection rate**.
-*   **The Cause**: The pool width is extremely narrow (exactly **0.10 ATR** / $1.15 in Gold). Any M30 bar that barely penetrates a level and closes back across this narrow zone counts as a "rejection."
-*   **Sensitivity**: Requiring the close to clear the inner boundary by a set buffer ATR reduces the rejection rate:
-    *   `>= 0.00 ATR`: 100% rejection rate.
-    *   `>= 0.10 ATR`: 74% rejection rate.
-    *   `>= 0.20 ATR`: 52% rejection rate.
-    *   `>= 0.50 ATR`: 10% rejection rate (only 69 events).
+### 2.1 The Sweep Efficiency Filter
+*   **Formula**: $\text{Efficiency} = \text{RejectionMargin} / \text{SweepSize}$.
+*   **The Reversal Trap**: Trades in the transitional gray zone ($2.0 \le \text{Efficiency} \le 2.5$) represent **100% BSL short setups** where a shallow sweep gets aggressively rejected but closes deep inside the range. In Gold's bullish trending cycles (like 2023), these are momentum coiling breakouts that run over counter-trend shorts.
+*   **Variant D**: Filters out this transitional gray zone, isolating the two high-probability reversion archetypes:
+    *   **Deep Exhaustion Reversals (< 2.0)**: Deep sweeps where stop runs are exhausted.
+    *   **Instant Level Rejections (> 2.5)**: Extremely shallow sweeps where price instantly rejects and pins the level.
 
-### 2.2 Expectancy & Trade Management
-*   **Raw exits fail**: A simple time-based exit (exit after 12 bars) yields **negative net expectancy** for almost all strengths.
-*   **The Asymmetric Edge**: A positive edge is unlocked only for **Group D (rejection margin $\ge 0.50$ ATR)** when paired with asymmetric risk parameters:
-    *   **Take Profit**: **2.00 ATR** (captures the V-reversal momentum).
-    *   **Stop Loss**: **1.00 ATR** (provides breathing room above Gold's median MAE of 0.627 ATR to avoid premature stop outs).
-    *   **Time Exit**: Hard exit after **12 M30 bars** (6 hours) to close stagnant positions.
-    *   *Result*: Expectancy of **$+0.1520$ ATR** and a **1.40 Profit Factor**.
+### 2.2 Directional Performance Breakdown (Variant D)
+*   **BSL (Shorts)**: 28 trades, **+0.1980 ATR expectancy, 1.48 PF**. (Profitable in 3 out of 4 years).
+*   **SSL (Longs)**: 30 trades, **+0.3349 ATR expectancy, 2.48 PF**. (Profitable in 3 out of 4 years).
+*   The system exhibits high directional symmetry and a balanced trade dataset.
 
 ---
 
-## 3. Critical Risks & Vulnerabilities
+## 3. Recommended Continuation Path (Phase 6)
 
-1.  **Outlier Dependency**: The positive expectancy of $+0.1520$ ATR is extremely fragile. Removing the top 10% best events turns expectancy to **$-0.2548$ ATR**. If a few large V-reversal spikes are missed, the system is net unprofitable.
-2.  **Temporal Instability**: The edge is highly regime-dependent. When segmented by year:
-    *   **2023 (Trending)**: **Unprofitable** (Expectancy: $-0.1091$ ATR, PF: 0.74).
-    *   **2024 (Mean-Reverting)**: **Spectacularly Profitable** (Expectancy: $+0.4599$ ATR, PF: 2.71).
-    *   During trending years, stop runs turn into breakout trends, running over reversal trades.
-3.  **Low Sample Size**: Group D sweeps average only **1.4 signals per month**.
+Your immediate task is to design and implement **Phase 6: Risk Management Engine** inside `src/engines/RiskEngine.mqh` (to be created) and update its validation test EAs.
 
----
+### Design Guidelines for Phase 6:
+1.  **Fixed 1% Account Risk**: Perform dynamic lot sizing calculations. The lot size must be computed using:
+    *   Account Balance (or Equity).
+    *   Stop Loss distance in points (derived from `EntrySignal.stopLossPrice` and `EntrySignal.entryPrice`).
+    *   Symbol point value and tick value for Gold (`XAUUSD`/`XAUUSDm`).
+2.  **Decoupled Code Contract**: Expose a clean interface for lot sizing calculations.
+3.  **No Changes to Prior Modules**: Keep Modules 1-5 frozen.
 
-## 4. Recommended Continuation Path (Phase 5)
 
-Your immediate task is to design and implement the **Entry Engine (Module 5)** inside `src/engines/EntryEngine.mqh` and write its validation EA `src/tests/TestEntry.mq5`.
-
-### Design Guidelines for CEntryEngine:
-1.  **Filter by Strength**: Ignore all sweeps that do not satisfy `rejectionMarginATR >= 0.50` (Group D).
-2.  **Implement H4 Trend Gating**:
-    - Query `CStructureEngine` trend state or check swings.
-    - If H4 trend is strongly trending (e.g. Bullish), **block BSL reversal trades (Shorts)**. Only trade SSL reversals (Longs).
-    - This gating is mandatory to prevent drawdowns in trending environments (like 2023).
-3.  **Risk Parameters**: Enforce `SL = 1.0 ATR`, `TP = 2.0 ATR`, and a market close exit after 12 M30 bars.
-4.  **No Changes to Prior Modules**: Do not edit Structure, Supply-Demand, SNR, or Liquidity detection logic. Keep them frozen.

@@ -44,11 +44,12 @@
 ---
 
 ## Phase 5 — Trade Entry Engine
-*   **Purpose**: Refines the H4 structural bias on the M30 execution timeframe. Validates entry setups (e.g., rejection margin thresholds $\ge 0.50$ ATR, H4 trend-gating) and places limit/market orders with fixed risk parameters (SL = 1.0 ATR, TP = 2.0 ATR, 12-bar exit).
+*   **Purpose**: Refines the H4 structural bias on the M30 execution timeframe. Validates entry setups (e.g., rejection margin thresholds $\ge 0.50$ ATR, Sweep Efficiency Filter to block transitional gray zone $2.0 \le \text{Efficiency} \le 2.5$) and places limit/market orders with fixed risk parameters (SL = 1.0 ATR, TP = 2.0 ATR, 12-bar exit).
 *   **Inputs**: `SnrPriorityContract`, `LiquidityPriorityContract`, H4 trend state, M30 price data, and current Bid/Ask.
 *   **Outputs**: Trade signal coordinates (entry price, stop-loss, take-profit, and trigger type).
 *   **Dependencies**: `CSnrEngine` (Module 3), `CLiquidityEngine` (Module 4).
-*   **Status**: **ACTIVE TARGET** (Research parameters established, MQL5 implementation pending).
+*   **Status**: ❄️ **FROZEN (Variant D Approved)**.
+
 
 ---
 

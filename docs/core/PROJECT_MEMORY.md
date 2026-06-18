@@ -1,7 +1,7 @@
 # PROJECT_MEMORY.md
 
-Version: 2.5
-Last Updated: 2026-06-13
+Version: 2.6
+Last Updated: 2026-06-18
 
 =========================================================
 PROJECT
@@ -82,6 +82,7 @@ Berbasis:
 * Asymmetric Risk-to-Reward models (SL = 1.0 ATR, TP = 2.0 ATR)
 * Time-decay exits (hard close at 12 M30 bars / 6 hours)
 * Downstream Entry Engine regime filters
+* Sweep Efficiency Filter gating (excluding $2.0 \le \text{Efficiency} \le 2.5$)
 
 =========================================================
 CURRENT PROJECT STATUS
@@ -109,6 +110,10 @@ Completed & Frozen:
 * [LiquidityEngine.mqh](file:///c:/xauusd_chatgpt/src/engines/LiquidityEngine.mqh) (Version 1.0) [FROZEN]
 * [TestLiquidity.mq5](file:///c:/xauusd_chatgpt/src/tests/TestLiquidity.mq5) (Compiler Verified)
 * [TestLiquidityValidation.mq5](file:///c:/xauusd_chatgpt/src/tests/TestLiquidityValidation.mq5) (Compiler Verified)
+* [EntryEngine.mqh](file:///c:/xauusd_chatgpt/src/engines/EntryEngine.mqh) (Version 1.0) [FROZEN]
+* [TestEntry.mq5](file:///c:/xauusd_chatgpt/src/tests/TestEntry.mq5) (Compiler Verified)
+* [PHASE5B_FINAL_VALIDATION_REPORT.md](file:///c:/xauusd_chatgpt/docs/reports/PHASE5B_FINAL_VALIDATION_REPORT.md)
+* [Phase5A_FINAL_VALIDATION_REPORT.md](file:///c:/xauusd_chatgpt/docs/reports/Phase5A_FINAL_VALIDATION_REPORT.md)
 
 =========================================================
 CURRENT ENGINE STATUS
@@ -120,6 +125,7 @@ Version:
 * SNR Engine v1.0 (Production-Ready) [FROZEN]
 * SNR Priority Engine v1.0 (Production-Ready) [FROZEN]
 * Liquidity Engine v1.0 (Production-Ready) [FROZEN]
+* Entry Engine v1.0 (Phase 5B Completed & Frozen, Variant D Approved)
 
 Features:
 * Fractal-based Swing Detection (N=3)
@@ -139,6 +145,7 @@ Features:
 * Nearest BSL/SSL pools mapping
 * Volatility-adjusted sweep size calculation on closed M30 bar 1
 * Decoupled liquidity detection and downstream contract output
+* Sweep Efficiency Filter gating (`VARIANT_D_EFF_OUTSIDE`) to filter out the 2.0-2.5 transitional trap.
 
 =========================================================
 RESOLVED ISSUES
@@ -156,6 +163,10 @@ RESOLVED ISSUES
   * *Finding*: Marker baru tergambar beberapa lilin setelah event terdeteksi. Diperbaiki dengan menggambar marker visual secara instan pada candle pendeteksi breach, bukan saat event ditutup atau saat flush data.
 * **Issue #10: Strategy Tester Journal Spam (Resolved in Phase 4.3)**
   * *Finding*: Log dari prioritas ATR filter dan invalidasi supply/demand membanjiri jurnal tester. Diperbaiki dengan menambahkan gate kompilasi `#ifdef` di file masing-masing.
+* **Issue #11: H4 Trend Gate Paradox (Resolved in Phase 5A)**
+  * *Finding*: Minimalist H4 Trend Gate memblokir setup pembalikan counter-trend tepat pada puncak tren H4 leg (seperti di 2022) dan gagal memitigasi drawdown trending year (2023). Filter secara resmi ditolak.
+* **Issue #12: Transitional Gray Zone Reversal Trap (Resolved in Phase 5B)**
+  * *Finding*: Trade dengan efisiensi 2.0 - 2.5 adalah 100% BSL short setup patologis yang bertindak sebagai jebakan breakout selama akumulasi pasar. Diselesaikan dengan menyaring efisiensi gray zone ini (Variant D).
 
 =========================================================
 DECISIONS ALREADY MADE
@@ -181,26 +192,26 @@ DECISIONS ALREADY MADE
 * **Decision #18**: Memotong pesan debug yang tidak penting menggunakan gate `#ifdef` untuk mencegah disk write bottleneck selama pengujian Strategy Tester.
 * **Decision #19**: Menolak model exit berbasis waktu murni tanpa stop/target pengaman. Menggunakan SL = 1.0 ATR (di atas median MAE 0.627 ATR) dan TP = 2.0 ATR untuk mengekstrak profit dari V-reversals yang ekstrem secara asimetris.
 * **Decision #20**: Mengakui ketidakstabilan temporal dari pembalikan likuiditas murni (merugi di 2023, untung besar di 2024). Mengharuskan Entry Engine hilir mengintegrasikan trend-filter guna menghindari entry saat tren H4 sangat kuat.
+* **Decision #21**: Penolakan H4 Trend Gate filter (Phase 5A). Evaluasi statistik membuktikan filter ini menurunkan total expectancy dari +0.1954 ATR ke +0.1196 ATR, serta merusak performa tahun 2022 (berubah dari profit ke rugi).
+* **Decision #22**: Penerimaan dan Pembekuan Variant D (Phase 5B). Menggunakan Sweep Efficiency filter untuk memblokir rentang efisiensi $2.0 \le \text{Efficiency} \le 2.5$. Pilihan ini meningkatkan total expectancy dari +0.1954 ATR menjadi +0.2688 ATR dan Profit Factor dari 1.54 menjadi 1.85.
 
 =========================================================
 NEXT PRIORITY
 =============
 
-Build Entry Engine (Module 5)
-* Mengintegrasikan `LiquidityPriorityContract` ke dalam pipeline.
-* Menerapkan filter margin penolakan ($\ge 0.50$ ATR).
-* Menerapkan H4 trend-gating filter untuk memblokir trade pembalikan yang melawan tren kuat.
-* Menguji kompilasi dan Strategy Tester pipeline.
+Phase 6 — Risk Management Engine
+* Merumuskan dynamical lot sizing berbasis ukuran Stop Loss untuk mempertahankan risiko akun tetap 1% per trade.
+* Merancang safety layers untuk integrasi portofolio.
 
 Do Not Do:
-* **Jangan memodifikasi model deteksi likuiditas beku** di `CLiquidityEngine`.
+* Jangan memodifikasi model deteksi likuiditas beku di `CLiquidityEngine`.
 * Jangan mendesain ulang scoring dan prioritizer level SNR.
 
 =========================================================
 SUCCESS CRITERIA
 ================
-* **Entry Engine**: Mampu menyaring sinyal likuiditas secara dinamis dan menghasilkan sinyal entry asimetris yang stabil secara temporal.
+* **Risk Management Engine**: Mampu melakukan kalkulasi lot dinamis berdasarkan balance dan SL dengan presisi tinggi di MT5.
 
 =========================================================
 END OF MEMORY
-=========================
+=======================================

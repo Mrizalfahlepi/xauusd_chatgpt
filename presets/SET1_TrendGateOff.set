@@ -1,0 +1,37 @@
+; XAUUSD_EA preset - SET 1 LONGGAR RINGAN (Trend Gate OFF)
+; Load di Strategy Tester > tab Inputs > tombol Load
+; Backtest: XAUUSD M30, 2022.01.01-2025.12.31, real ticks, real spread + komisi broker
+InpSwingLookback=3
+InpMaxBarsAnalyze=500
+InpATRPeriod=14
+InpBOSBreakMultiplier=0.25
+InpMinSwingDistATR=0.5
+InpScoreWeightDisplace=40
+InpScoreWeightReaction=35
+InpScoreWeightAge=25
+InpReactionTolerance=0.15
+InpEnableStructureLog=false
+InpSnrClusterToleranceATR=0.25
+InpSnrMaxClusterWidthATR=1.5
+InpSnrMergeOverlapRatio=0.5
+InpSnrFreshnessResetPct=0.2
+InpSnrInvalidatedLookback=150
+InpSnrWeightStruct=0.2
+InpSnrWeightSD=0.3
+InpSnrWeightFresh=0.2
+InpSnrWeightReject=0.2
+InpSnrWeightConfl=0.1
+InpSnrLiquidityTolATR=0.1
+InpSnrEnableLog=false
+InpMinRejectionMarginATR=0.5
+InpEnableTrendGate=false
+InpVariantMode=0
+InpMaxBars=300
+InpRiskPercent=1.0
+InpMaxLot=5.0
+InpMinLot=0.01
+InpMaxSpreadPoints=500.0
+InpUseEquityRisk=true
+InpMagicNumber=880118
+InpMaxOpenTrades=1
+InpSlippagePoints=30

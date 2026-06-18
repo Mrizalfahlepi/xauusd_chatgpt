@@ -15,7 +15,8 @@
 ![Module 1](https://img.shields.io/badge/Structure%20Engine-v2.2%20FROZEN-2ea043?style=flat-square)
 ![Module 2](https://img.shields.io/badge/Supply%2FDemand-v1.1%20FROZEN-2ea043?style=flat-square)
 ![Module 3](https://img.shields.io/badge/SNR%20Engine-v1.0%20FROZEN-2ea043?style=flat-square)
-![Module 3.4](https://img.shields.io/badge/Priority%20Engine-v1.0%20FROZEN-2ea043?style=flat-square)
+![Module 4](https://img.shields.io/badge/Liquidity%20Engine-v1.0%20FROZEN-2ea043?style=flat-square)
+![Module 5](https://img.shields.io/badge/Entry%20Engine-v1.0%20FROZEN-2ea043?style=flat-square)
 
 </div>
 
@@ -25,19 +26,21 @@
 
 > [!IMPORTANT]
 > **Authoritative Project Status**: [CURRENT_PROJECT_STATE.md](CURRENT_PROJECT_STATE.md)  
-> **Current Phase**: Phase 4 — Liquidity Engine  
+> **Current Phase**: Phase 6 — Risk Management Engine  
 > **Frozen Modules**:  
 > * `StructureEngine` (v2.2)  
 > * `SupplyDemandEngine` (v1.1)  
 > * `SnrEngine` (v1.0)  
 > * `CSnrPriorityEngine` (v1.0)  
+> * `CLiquidityEngine` (v1.0)  
+> * `CEntryEngine` (v1.0)  
 >
-> **Stable Interface Contract**: `SnrPriorityContract`  
-> **Next Milestone**: Phase 4 — Liquidity Engine  
+> **Stable Interface Contracts**: `SnrPriorityContract`, `LiquidityPriorityContract`, `EntrySignal`  
+> **Next Milestone**: Phase 6 — Risk Management Engine  
 >
 > **CRITICAL ARCHITECTURAL CONSTRAINTS**:  
-> 1. **Sprint 3 (Consolidation & Prioritization) is strictly frozen.** No redesign or modifications allowed for the scoring logic or engine code.  
-> 2. **No redesign of `SnrPriorityContract`.** Its interface is locked.  
+> 1. **Prior engines (Phases 1-5) are strictly frozen.** No redesign or modifications allowed for the logic or engine code.  
+> 2. **No redesign of contracts.** Interface layers are locked.  
 > 3. **Backward compatibility is mandatory** for all includes and data contracts.
 
 ---
@@ -107,9 +110,9 @@ The final production target is a fully automated portfolio execution system buil
 | 1 | **Structure Engine** | H4 | Fractal swing detection, ATR-graded major/minor swings, non-repainting BOS & MSS, trend classification | 🟢 **Frozen v2.2** |
 | 2 | **Supply & Demand Engine** | H4 | Impulse-base-displacement order blocks, invalidation tracking, retest counting, quality scoring | 🟢 **Frozen v1.1** |
 | 3 | **SNR Engine & Prioritizer** | H4 | Cluster swings + order blocks into consolidated bands, filter by Quality Score and ATR distance, output bounded contract | 🟢 **Frozen v1.0** |
-| 4 | **Liquidity Engine** | H4/M30 | Detect stop-loss clusters above/below swings, track sweep events, stop run tagging | 🟡 **Active Phase** |
-| 5 | **Entry Engine** | M30 | Refine H4 bias, validate setups (engulfing, pinbar), place limit/market orders | ⚪ Planned |
-| 6 | **Risk Engine** | M30 | Compute lot size from SL distance to maintain fixed 1% risk | ⚪ Planned |
+| 4 | **Liquidity Engine** | H4/M30 | Detect stop-loss clusters above/below swings, track sweep events, stop run tagging | 🟢 **Frozen v1.0** |
+| 5 | **Entry Engine** | M30 | Refine H4 bias, validate setups (engulfing, pinbar), place limit/market orders | 🟢 **Frozen v1.0** |
+| 6 | **Risk Engine** | M30 | Compute lot size from SL distance to maintain fixed 1% risk | 🟡 **Active Phase** |
 | 7 | **Portfolio / Trade Mgmt** | M30 | Trailing stops, break-even, partial closes, news deactivation | ⚪ Planned |
 | 8 | **Live Validation** | — | Forward testing on demo/micro accounts, drawdown ≤ 10% | ⚪ Planned |
 
@@ -194,8 +197,8 @@ ROOT/
 │   └── archive/   ← Superseded historical docs (ARTICLE.md, note_for_user.md)
 │
 └── src/
-    ├── engines/   ← StructureEngine.mqh · SupplyDemandEngine.mqh · SnrEngine.mqh · SnrPriorityEngine.mqh
-    └── tests/     ← TestStructure.mq5 · TestSupplyDemand.mq5 · TestSnr.mq5
+    ├── engines/   ← StructureEngine.mqh · SupplyDemandEngine.mqh · SnrEngine.mqh · SnrPriorityEngine.mqh · EntryEngine.mqh
+    └── tests/     ← TestStructure.mq5 · TestSupplyDemand.mq5 · TestSnr.mq5 · TestEntry.mq5
 ```
 
 ---
@@ -215,12 +218,11 @@ This repo is unusual: it's engineered so that **any AI assistant can be onboarde
 
 ---
 
-## 🚀 Next Phase — Phase 4: Liquidity Engine
+## 🚀 Next Phase — Phase 6: Risk Management Engine
 
-Build the Liquidity Engine to detect and process order stops above and below swing points:
-- **Liquidity sweeps (Stop Runs)**: Track when price invalidates major swing highs (BSL) or major swing lows (SSL) and then rapidly returns.
-- **BSL/SSL targets**: Expose active liquidity pools to the Entry Engine.
-- **Stable Interface**: Integrate with and consume the frozen `SnrPriorityContract`.
+Build the Risk Management Engine to perform dynamic lot sizing calculations:
+- **Fixed 1% Account Risk**: Calculate dynamic lot size from account balance/equity and SL distance.
+- **Symbol parameters check**: Dynamically fetch Gold contract specifications (tick size, tick value, point value) from the MT5 broker.
 
 ---
 
